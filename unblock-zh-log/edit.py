@@ -94,9 +94,7 @@ for record in events:
         reason = '[' + link + ' {}]'.format(id)
         print(id, end='\t')
         new_log = '|-\n|{}\n|{}\n|{}\n|{}\n'.format(timestamp, action, target, reason)
-        if new_log in old_record_text:
-            continue
-        else:
+        if new_log not in old_record_text:
             append_text = append_text + new_log
         print()
     elif record['type'] == 'rights':
@@ -122,17 +120,13 @@ for record in events:
                 reason = '[' + link + ' {}]'.format(id)
                 print(id, end='\t')
                 new_log = '|-\n|{}\n|{}\n|{}\n|{}\n'.format(timestamp, action, target, reason)
-                if new_log in old_record_text:
-                    continue
-                else:
+                if new_log not in old_record_text:
                     append_text = append_text + new_log
             else:
                 reason = record['comment']
                 print(reason, end='\t')
                 new_log = '|-\n|{}\n|{}\n|{}\n|{}\n'.format(timestamp, action, target, reason)
-                if new_log in old_record_text:
-                    continue
-                else:
+                if new_log not in old_record_text:
                     append_text = append_text + new_log
             print()
 
