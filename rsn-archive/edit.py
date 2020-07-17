@@ -102,7 +102,7 @@ for target in archivelist:
     if not archivepage.exists():
         text = cfg["archive_page_preload"]
     text += "\n\n" + "\n\n".join(archivelist[target])
-
+    text = re.sub(r"{{status2\|(讨论|討論)中}}", "{{status2|-|已過時並存檔}}", text)
     pywikibot.showDiff(archivepage.text, text)
     archivepage.text = text
     summary = cfg["archive_page_summary"].format(len(archivelist[target]))
