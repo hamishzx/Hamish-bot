@@ -24,6 +24,7 @@ print(json.dumps(cfg, indent=4, ensure_ascii=False))
 if not cfg["enable"]:
     exit("disabled\n")
 
+summary_prefix = "[[Wikipedia:机器人/申请/Hamish-bot/3|正式批准之任務]]："
 rsnpage = pywikibot.Page(site, cfg["main_page_name"])
 text = rsnpage.text
 
@@ -93,7 +94,7 @@ pywikibot.showDiff(rsnpage.text, text)
 rsnpage.text = text
 summary = cfg["main_page_summary"].format(count)
 print(summary)
-rsnpage.save(summary=summary, minor=False)
+rsnpage.save(summary=summary_prefix + summary, minor=False)
 
 for target in archivelist:
     archivepage = pywikibot.Page(site, cfg["archive_page_name"].format(target[0], target[1]))
@@ -107,4 +108,4 @@ for target in archivelist:
     archivepage.text = text
     summary = cfg["archive_page_summary"].format(len(archivelist[target]))
     print(summary)
-    archivepage.save(summary=summary, minor=False)
+    archivepage.save(summary=summary_prefix + summary, minor=False)
