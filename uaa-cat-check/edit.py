@@ -37,7 +37,7 @@ for page in catpage.articles():
     }
     blockinfo = session.get(url="https://zh.wikipedia.org/w/api.php", params=params).json()
     print(blockinfo['query']['blocks'])
-    if not blockinfo['query']['blocks'] or blockinfo['query']['blocks'][0]['expiry'] != "infinity" or "partial" in a['query']['blocks'][0]:
+    if not blockinfo['query']['blocks'] or blockinfo['query']['blocks'][0]['expiry'] != "infinity" or "partial" in blockinfo['query']['blocks'][0]:
         continue
     utpage = pywikibot.Page(site, page.title())
     template_text = "{{subst:uw-username|category=}}"
