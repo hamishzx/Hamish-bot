@@ -8,7 +8,7 @@ from datetime import datetime
 
 os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 import pywikibot
-from config import config_page_name  # pylint: disable=E0611,W0614
+# from config import config_page_name  # pylint: disable=E0611,W0614
 
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
@@ -16,13 +16,13 @@ print('Starting at: ' + time.asctime(time.localtime(time.time())))
 site = pywikibot.Site()
 site.login()
 
-config_page = pywikibot.Page(site, config_page_name)
-cfg = config_page.text
-cfg = json.loads(cfg)
-print(json.dumps(cfg, indent=4, ensure_ascii=False))
+# config_page = pywikibot.Page(site, config_page_name)
+# cfg = config_page.text
+# cfg = json.loads(cfg)
+# print(json.dumps(cfg, indent=4, ensure_ascii=False))
 
-if not cfg["enable"]:
-    exit("disabled\n")
+# if not cfg["enable"]:
+#     exit("disabled\n")
 
 catpage = pywikibot.Category(site, "Category:可能违反方针的用户名")
 for page in catpage.articles():
