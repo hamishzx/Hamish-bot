@@ -46,4 +46,4 @@ for page in catpage.articles():
     text = re.sub(r'\{\{Uw-username\}\}', template_text, text, flags=re.M)
     pywikibot.showDiff(utpage.text, text)
     utpage.text = text
-    utpage.save(summary="uaa-cat-check", minor=False)
+    utpage.save(summary="uaa-cat-check, authorised test", minor=False)
