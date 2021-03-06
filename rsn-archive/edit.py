@@ -77,8 +77,6 @@ for section in text:
         target = (lasttime.year, lasttime.month)
         if target not in archivelist:
             archivelist[target] = []
-        archivestr = re.sub(
-            r"{{bot-directive-archiver\|no-archive-begin}}[\s\S]+?{{bot-directive-archiver\|no-archive-end}}\n?", "", archivestr)
         archivelist[target].append(section)
         count += 1
 
