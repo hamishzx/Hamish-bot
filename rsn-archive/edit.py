@@ -56,14 +56,11 @@ for section in text:
     if status in cfg["publicizing_status"]:
         publicizing = True
         print("publicizing", end="\t")
-        break
     elif status in cfg["done_status"]:
         processed = True
         print("processed", end="\t")
-        break
     else:
         print("not processed", end="\t")
-        break
 
     lasttime = datetime(1, 1, 1)
     for m in re.findall(r"(\d{4})年(\d{1,2})月(\d{1,2})日 \(.\) (\d{2}):(\d{2}) \(UTC\)", str(section)):
