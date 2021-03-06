@@ -36,7 +36,7 @@ text = text.split(rndstr)
 archivelist = {}
 count = 0
 
-for section in text
+for section in text:
     section = section.strip()
     if section == '':
         continue
