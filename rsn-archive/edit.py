@@ -51,7 +51,7 @@ for section in text:
     publicizing = False
 
 
-    status = re.findall(r"\{\(S|s)tatus2\|(.*)\}\}", section)[0][1]
+    status = re.findall(r"\{\{(S|s)tatus2\|(.*)\}\}", section)[0][1]
     print("status", status, end="\t")
     if status in cfg["publicizing_status"]:
         publicizing = True
