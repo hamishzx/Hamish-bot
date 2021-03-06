@@ -69,7 +69,7 @@ for section in text:
         target = (lasttime.year, lasttime.month)
         if target not in archivelist:
             archivelist[target] = []
-        archivelist[target].append(archivestr)
+        archivelist[target].append(section)
         count += 1
         print("archive to " + str(target), end="\t")
     else:
