@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
+import hashlib
 import os
 import re
 import time
 from datetime import datetime
 
-import mwparserfromhell
 os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 import pywikibot
 from config import config_page_name  # pylint: disable=E0611,W0614
@@ -28,16 +28,22 @@ summary_prefix = "[[Wikipedia:机器人/申请/Hamish-bot/3|正式批准之任�
 rsnpage = pywikibot.Page(site, cfg["main_page_name"])
 text = rsnpage.text
 
-wikicode = mwparserfromhell.parse(text)
+rndstr = hashlib.md5(str(time.time()).encode()).hexdigest()
+text = re.sub(r'^(===[^=]+===)$', rndstr + r'\1', text, flags=re.M)
+text = text.split(rndstr)
+
+mainPageText = text[0].strip()
+text = text[1:]
 
 archivelist = {}
 count = 0
 
-for section in wikicode.get_sections()[1:]:
+for section in text:
+    section = section.strip()
     if section == '':
         continue
     else:
-        title = str(section.get(0).title)
+        title = section.split('\n')[0]
         print(title, end="\t")
 
     processed = False
