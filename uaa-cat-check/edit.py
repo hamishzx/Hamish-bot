@@ -21,8 +21,8 @@ cfg = config_page.text
 cfg = json.loads(cfg)
 print(json.dumps(cfg, indent=4, ensure_ascii=False))
 
-# if not cfg["enable"]:
-#    exit("disabled\n")
+if not cfg["enable"]:
+    exit("disabled\n")
 
 catpage = pywikibot.Category(site, "Category:可能违反方针的用户名")
 for page in catpage.articles():
@@ -37,12 +37,13 @@ for page in catpage.articles():
     }
     blockinfo = session.get(url="https://zh.wikipedia.org/w/api.php", params=params).json()
     print(blockinfo['query']['blocks'])
-    if not blockinfo['query']['blocks'] or blockinfo['query']['blocks'][0]['expiry'] != "infinity":
+    if not blockinfo['query']['blocks'] or blockinfo['query']['blocks'][0]['expiry'] != "infinity" or "partial" in blockinfo['query']['blocks'][0]:
         continue
     utpage = pywikibot.Page(site, page.title())
+    template_text = "{{subst:uw-username|category=}}"
     text = utpage.text
     text = re.sub(r'\[\[Category:可能(违|違)反方(针|針)的用(户|戶)名(\|{{PAGENAME}}|)\]\]', '', text, flags=re.M)
-    text = re.sub(r'\{\{Uw-username\}\}', '', text, flags=re.M)
+    text = re.sub(r'\{\{Uw-username\}\}', template_text, text, flags=re.M)
     pywikibot.showDiff(utpage.text, text)
     utpage.text = text
-    utpage.save(summary="uaa-cat-check", minor=False)
+    utpage.save(summary="[[Wikipedia:机器人/申请/Hamish-bot/4|T4]]：自動維護[[:Category:可能违反方针的用户名]]", minor=False)

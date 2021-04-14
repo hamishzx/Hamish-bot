@@ -4,6 +4,7 @@ import hashlib
 import os
 import re
 import time
+import hashlib
 from datetime import datetime
 
 os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
@@ -24,7 +25,7 @@ print(json.dumps(cfg, indent=4, ensure_ascii=False))
 if not cfg["enable"]:
     exit("disabled\n")
 
-summary_prefix = "[[Wikipedia:机器人/申请/Hamish-bot/3|正式批准之任務]]："
+summary_prefix = "[[Wikipedia:机器人/申请/Hamish-bot/3|T3]]："
 rsnpage = pywikibot.Page(site, cfg["main_page_name"])
 text = rsnpage.text
 
@@ -49,24 +50,17 @@ for section in text:
     processed = False
     publicizing = False
 
-    for template in section.filter_templates():
-        if template.name.lower() == "status2":
-            if template.has(1):
-                status = template.get(1)
-            else:
-                status = "(empty)"
-            print("status", status, end="\t")
-            if status in cfg["publicizing_status"]:
-                publicizing = True
-                print("publicizing", end="\t")
-                break
-            elif status in cfg["done_status"]:
-                processed = True
-                print("processed", end="\t")
-                break
-            else:
-                print("not processed", end="\t")
-                break
+
+    status = re.findall(r"\{\{(S|s)tatus2\|(.*)\}\}", section)[0][1]
+    print("status", status, end="\t")
+    if status in cfg["publicizing_status"]:
+        publicizing = True
+        print("publicizing", end="\t")
+    elif status in cfg["done_status"]:
+        processed = True
+        print("processed", end="\t")
+    else:
+        print("not processed", end="\t")
 
     lasttime = datetime(1, 1, 1)
     for m in re.findall(r"(\d{4})年(\d{1,2})月(\d{1,2})日 \(.\) (\d{2}):(\d{2}) \(UTC\)", str(section)):
@@ -83,21 +77,20 @@ for section in text:
         target = (lasttime.year, lasttime.month)
         if target not in archivelist:
             archivelist[target] = []
-        archivestr = str(section).strip()
-        archivestr = re.sub(
-            r"{{bot-directive-archiver\|no-archive-begin}}[\s\S]+?{{bot-directive-archiver\|no-archive-end}}\n?", "", archivestr)
-        archivelist[target].append(archivestr)
+        archivelist[target].append(section)
         count += 1
-        section.remove(section)
+
         print("archive to " + str(target), end="\t")
+    else:
+        mainPageText += '\n\n' + section
+        print("not archive", end="\t")
     print()
 
-text = str(wikicode)
-if rsnpage.text == text:
+if count == 0:
     exit("nothing changed")
 
-pywikibot.showDiff(rsnpage.text, text)
-rsnpage.text = text
+pywikibot.showDiff(rsnpage.text, mainPageText)
+rsnpage.text = mainPageText
 summary = cfg["main_page_summary"].format(count)
 print(summary)
 rsnpage.save(summary=summary_prefix + summary, minor=False)

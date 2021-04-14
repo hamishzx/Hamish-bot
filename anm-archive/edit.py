@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+import hashlib
 from datetime import datetime
 
 import mwparserfromhell
@@ -24,20 +25,26 @@ print(json.dumps(cfg, indent=4, ensure_ascii=False))
 if not cfg["enable"]:
     exit("disabled\n")
 
-summary_prefix = "[[Wikipedia:机器人/申请/Hamish-bot/2|正式批准之任務]]："
+summary_prefix = "[[Wikipedia:机器人/申请/Hamish-bot/2|T2]]："
 ewippage = pywikibot.Page(site, cfg["main_page_name"])
 text = ewippage.text
 
-wikicode = mwparserfromhell.parse(text)
+rndstr = hashlib.md5(str(time.time()).encode()).hexdigest()
+text = re.sub(r'^(===[^=]+===)$', rndstr + r'\1', text, flags=re.M)
+text = text.split(rndstr)
+
+mainPageText = text[0].strip()
+text = text[1:]
 
 archivelist = {}
 count = 0
 
-for section in wikicode.get_sections()[1:]:
+for section in text:
+    section = section.strip()
     if section == '':
         continue
     else:
-        title = str(section.get(0).title)
+        title = section.split('\n')[0]
         print(title, end="\t")
 
     lasttime = datetime(1, 1, 1)
@@ -62,21 +69,19 @@ for section in wikicode.get_sections()[1:]:
         target = (lasttime.year, lasttime.month)
         if target not in archivelist:
             archivelist[target] = []
-        archivestr = str(section).strip()
-        archivestr = re.sub(
-            r"{{bot-directive-archiver\|no-archive-begin}}[\s\S]+?{{bot-directive-archiver\|no-archive-end}}\n?", "", archivestr)
-        archivelist[target].append(archivestr)
+        archivelist[target].append(section)
         count += 1
-        section.remove(section)
         print("archive to " + str(target), end="\t")
+    else:
+        mainPageText += '\n\n' + section
+        print("not archive", end="\t")
     print()
 
-text = str(wikicode)
-if ewippage.text == text:
+if count == 0:
     exit("nothing changed")
 
-pywikibot.showDiff(ewippage.text, text)
-ewippage.text = text
+pywikibot.showDiff(ewippage.text, mainPageText)
+ewippage.text = mainPageText
 summary = cfg["main_page_summary"].format(count)
 print(summary)
 ewippage.save(summary=summary_prefix + summary, minor=False)
