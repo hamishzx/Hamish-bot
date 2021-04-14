@@ -30,7 +30,8 @@ rsnpage = pywikibot.Page(site, cfg["main_page_name"])
 text = rsnpage.text
 
 rndstr = hashlib.md5(str(time.time()).encode()).hexdigest()
-text = re.sub(r'^(===[^=]+===)$', rndstr + r'\1', text, flags=re.M)
+
+text = re.sub(r'^(==[^=]+==)$', rndstr + r'\1', text, flags=re.M)
 text = text.split(rndstr)
 
 mainPageText = text[0].strip()
@@ -50,8 +51,7 @@ for section in text:
     processed = False
     publicizing = False
 
-
-    status = re.findall(r"\{\{(S|s)tatus2\|(.*)\}\}", section)[0][1]
+    status = re.findall(r"\{\{(S|s)tatus\|(.*)\}\}", section)[0][1]
     print("status", status, end="\t")
     if status in cfg["publicizing_status"]:
         publicizing = True

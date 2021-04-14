@@ -1,3 +1,17 @@
+#custom
+apicache-py3
+__pycache__
+*/apicache-py3
+*/__pycache__
+*/pywikibot.lwp
+*/throttle.ctrl
+pywikibot.lwp
+throttle.ctrl
+*/user*
+user*
+*/config.py
+config.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
