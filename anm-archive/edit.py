@@ -99,3 +99,5 @@ for target in archivelist:
     summary = cfg["archive_page_summary"].format(len(archivelist[target]))
     print(summary)
     archivepage.save(summary=summary_prefix + summary, minor=False)
+    
+# TODO: update table on userpage using time.strftime("%d/%m/%y %H:%M", time.localtime())

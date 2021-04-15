@@ -47,3 +47,5 @@ for page in catpage.articles():
     pywikibot.showDiff(utpage.text, text)
     utpage.text = text
     utpage.save(summary="[[Wikipedia:机器人/申请/Hamish-bot/4|T4]]：自動維護[[:Category:可能违反方针的用户名]]", minor=False)
+
+# TODO: update table on userpage using time.strftime("%d/%m/%y %H:%M", time.localtime())
