@@ -15,9 +15,9 @@ from config import config_page_name  # pylint: disable=E0611,W0614
 def timeRecord(op, t):
     user_page = pywikibot.Page(site, "User:Hamish-bot")
     user_page_text = user_page.text
-    user_page_text = re.sub(r'<!-- T2rs -->(.*)<!-- T2re -->', '<!-- T2rs -->' + t + '<!-- T2re -->', user_page_text, flags=re.M)
+    user_page_text = re.sub(r'<!-- T3rs -->(.*)<!-- T3re -->', '<!-- T3rs -->' + t + '<!-- T3re -->', user_page_text, flags=re.M)
     if op:
-        user_page_text = re.sub(r'<!-- T2os -->(.*)<!-- T2oe -->', '<!-- T2os -->' + t + '<!-- T2oe -->', user_page_text, flags=re.M)
+        user_page_text = re.sub(r'<!-- T3os -->(.*)<!-- T3oe -->', '<!-- T3os -->' + t + '<!-- T3oe -->', user_page_text, flags=re.M)
     pywikibot.showDiff(user_page.text, user_page_text)
     user_page.text = user_page_text
     user_page.save(summary = "Updating task report", minor = False)
