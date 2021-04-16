@@ -76,9 +76,9 @@ for section in text:
     else:
         print("not processed", end="\t")
 
-    lasttime = datetime(1, 1, 1)
+    lasttime = datetime.datetime(1, 1, 1)
     for m in re.findall(r"(\d{4})年(\d{1,2})月(\d{1,2})日 \(.\) (\d{2}):(\d{2}) \(UTC\)", str(section)):
-        d = datetime(int(m[0]), int(m[1]), int(m[2]), int(m[3]), int(m[4]))
+        d = datetime.datetime(int(m[0]), int(m[1]), int(m[2]), int(m[3]), int(m[4]))
         lasttime = max(lasttime, d)
     print(lasttime, end="\t")
 
@@ -87,7 +87,7 @@ for section in text:
             (processed and not publicizing and time.time() - lasttime.timestamp() > cfg["time_to_live_for_processed"])
             or (not processed and not publicizing and time.time() - lasttime.timestamp() > cfg["time_to_live_for_not_processed"])
         )
-            and lasttime != datetime(1, 1, 1)):
+            and lasttime != datetime.datetime(1, 1, 1)):
         target = (lasttime.year, lasttime.month)
         if target not in archivelist:
             archivelist[target] = []
