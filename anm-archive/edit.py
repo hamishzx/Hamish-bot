@@ -11,6 +11,7 @@ os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 import pywikibot
 from config import config_page_name  # pylint: disable=E0611,W0614
 
+
 def timeRecord(op, t):
     user_page = pywikibot.Page(site, "User:Hamish-bot")
     user_page_text = user_page.text
@@ -20,6 +21,7 @@ def timeRecord(op, t):
     pywikibot.showDiff(user_page.text, user_page_text)
     user_page.text = user_page_text
     user_page.save(summary = "Updating task report", minor = False)
+
 
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
