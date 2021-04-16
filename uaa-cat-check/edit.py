@@ -4,7 +4,7 @@ import os
 import re
 import time
 import requests
-from datetime import datetime
+import datetime
 
 os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 import pywikibot
@@ -12,7 +12,7 @@ from config import config_page_name  # pylint: disable=E0611,W0614
 
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
-rec_time = time.strftime("%d/%m/%y %H:%M", time.localtime())
+rec_time = (datetime.datetime.now() + datetime.timedelta(hours = 8)).__format__('%d/%m/%y %H:%M')
 
 site = pywikibot.Site()
 site.login()
