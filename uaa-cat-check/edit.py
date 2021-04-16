@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-import json
-import os
-import re
-import time
-import requests
-import datetime
+import json, os, re, time, requests, datetime
 
 os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 import pywikibot
