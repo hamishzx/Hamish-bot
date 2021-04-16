@@ -4,7 +4,7 @@ import os
 import re
 import time
 import hashlib
-from datetime import datetime
+import datetime
 
 import mwparserfromhell
 os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
@@ -13,6 +13,7 @@ from config import config_page_name  # pylint: disable=E0611,W0614
 
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
+rec_time = (datetime.datetime.now() + datetime.timedelta(hours = 8)).__format__('%d/%m/%y %H:%M')
 
 site = pywikibot.Site()
 site.login()
@@ -21,6 +22,7 @@ config_page = pywikibot.Page(site, config_page_name)
 cfg = config_page.text
 cfg = json.loads(cfg)
 print(json.dumps(cfg, indent=4, ensure_ascii=False))
+op = False
 
 if not cfg["enable"]:
     exit("disabled\n")
@@ -85,6 +87,7 @@ ewippage.text = mainPageText
 summary = cfg["main_page_summary"].format(count)
 print(summary)
 ewippage.save(summary=summary_prefix + summary, minor=False)
+op = True
 
 for target in archivelist:
     archivepage = pywikibot.Page(site, cfg["archive_page_name"].format(target[0], target[1]))
@@ -100,4 +103,13 @@ for target in archivelist:
     print(summary)
     archivepage.save(summary=summary_prefix + summary, minor=False)
     
-# TODO: update table on userpage using time.strftime("%d/%m/%y %H:%M", time.localtime())
+# Updating task table on user page
+
+user_page = pywikibot.Page(site, "User:Hamish-bot")
+user_page_text = user_page.text
+user_page_text = re.sub(r'<!-- T2rs -->(.*)<!-- T2re -->', '<!-- T2rs -->' + rec_time + '<!-- T2re -->', user_page_text, flags=re.M)
+if op:
+    user_page_text = re.sub(r'<!-- T2os -->(.*)<!-- 2oe -->', '<!-- T2os -->' + rec_time + '<!-- T2oe -->', user_page_text, flags=re.M)
+pywikibot.showDiff(user_page.text, user_page_text)
+user_page.text = user_page_text
+user_page.save(summary = "Updating task report", minor = False)
