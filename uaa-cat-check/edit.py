@@ -54,9 +54,9 @@ for page in catpage.articles():
 
 user_page = pywikibot.Page(site, "User:Hamish-bot")
 user_page_text = user_page.text
-user_page_text = re.sub(r'<!-- T4rs -->(.*)<!-- T4re -->', '<!-- T4rs -->' + time + '<!-- T4re -->', user_page_text, flags=re.M)
+user_page_text = re.sub(r'<!-- T4rs -->(.*)<!-- T4re -->', '<!-- T4rs -->' + rec_time + '<!-- T4re -->', user_page_text, flags=re.M)
 if op:
-    user_page_text = re.sub(r'<!-- T4os -->(.*)<!-- T4oe -->', '<!-- T4os -->' + time + '<!-- T4oe -->', user_page_text, flags=re.M)
+    user_page_text = re.sub(r'<!-- T4os -->(.*)<!-- T4oe -->', '<!-- T4os -->' + rec_time + '<!-- T4oe -->', user_page_text, flags=re.M)
 pywikibot.showDiff(user_page.text, user_page_text)
 user_page.text = user_page_text
 user_page.save(summary = "Updating task report", minor = False)
