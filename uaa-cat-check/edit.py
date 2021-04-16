@@ -12,6 +12,7 @@ from config import config_page_name  # pylint: disable=E0611,W0614
 
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
+rec_time = time.strftime("%d/%m/%y %H:%M", time.localtime())
 
 site = pywikibot.Site()
 site.login()
@@ -20,6 +21,7 @@ config_page = pywikibot.Page(site, config_page_name)
 cfg = config_page.text
 cfg = json.loads(cfg)
 print(json.dumps(cfg, indent=4, ensure_ascii=False))
+op = False
 
 if not cfg["enable"]:
     exit("disabled\n")
@@ -47,5 +49,15 @@ for page in catpage.articles():
     pywikibot.showDiff(utpage.text, text)
     utpage.text = text
     utpage.save(summary="[[Wikipedia:机器人/申请/Hamish-bot/4|T4]]：自動維護[[:Category:可能违反方针的用户名]]", minor=False)
+    op = True
 
-# TODO: update table on userpage using time.strftime("%d/%m/%y %H:%M", time.localtime())
+# Updating task table on user page
+
+user_page = pywikibot.Page(site, "User:Hamish-bot")
+user_page_text = user_page.text
+user_page_text = re.sub(r'<!-- T4rs -->(.*)<!-- T4re -->', '<!-- T4rs -->' + time + '<!-- T4re -->', user_page_text, flags=re.M)
+if op:
+    user_page_text = re.sub(r'<!-- T4os -->(.*)<!-- T4oe -->', '<!-- T4os -->' + time + '<!-- T4oe -->', user_page_text, flags=re.M)
+pywikibot.showDiff(user_page.text, user_page_text)
+user_page.text = user_page_text
+user_page.save(summary = "Updating task report", minor = False)
