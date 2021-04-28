@@ -12,18 +12,6 @@ rec_time = (datetime.datetime.now() + datetime.timedelta(hours = 8)).__format__(
 site = pywikibot.Site()
 site.login()
 
-# Province, City, Area, Street 分别对应省级、地级、县级、乡级的行政区划
-
-province_list_page = pywikibot.Page(site, "Template:PRC_admin/list/00/00/00/000/000")
-pattern = re.compile(r'\d{2}')
-province_list = pattern.findall(province_list_page.text)
-wd_id_pattern = re.compile(r'wikidata=([Q|q]\d{1,9})\|')
-repo = site.data_repository()
-
-if (len(province_list) != 34):
-    print("[ERR]Isn't it 34?")
-    exit
-
 def province_check(list):
     print("Start province check\n")
     province_list = list
@@ -96,6 +84,18 @@ def city_check(province):
     print('City check for {0} completed.\n{1} total, {2} delta.'.format(province, city_total, city_delta), end='\n')
 
 if __name__ == '__main__':
+    # Province, City, Area, Street 分别对应省级、地级、县级、乡级的行政区划
+
+    province_list_page = pywikibot.Page(site, "Template:PRC_admin/list/00/00/00/000/000")
+    pattern = re.compile(r'\d{2}')
+    province_list = pattern.findall(province_list_page.text)
+    wd_id_pattern = re.compile(r'wikidata=([Q|q]\d{1,9})\|')
+    repo = site.data_repository()
+
+    if (len(province_list) != 34):
+        print("[ERR]Isn't it 34?")
+        exit
     province_check(province_list)
+
 end_time = time.time()
 print("Elasped time: " + str(format(end_time - start_time, '.2f') + ' seconds'))
