@@ -12,9 +12,9 @@ rec_time = (datetime.datetime.now() + datetime.timedelta(hours = 8)).__format__(
 site = pywikibot.Site()
 site.login()
 
-def province_check(list):
+def province_check(incoming_list):
     print("Start province check\n")
-    province_list = list
+    province_list = incoming_list
     province_total = len(province_list)
     province_delta = 0
 
@@ -49,7 +49,7 @@ def province_check(list):
 def city_check(province):
     print("Start city check\n")
     city_list_page = pywikibot.Page(site, "Template:PRC_admin/list/{0}/00/00/000/000".format(province))
-    city_list = pattern.findall(city_list_page)
+    city_list = pattern.findall(city_list_page.text)
     city_total = len(city_list)
     city_delta = 0
 
