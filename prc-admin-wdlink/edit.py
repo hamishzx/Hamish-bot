@@ -55,4 +55,4 @@ print('Province check completed.\n{0} total, {1} delta.'.format(province_total, 
 print("Start city check\n")
 
 end_time = time.time()
-print("Elasped time: " + str(format(end_time - start_time, '.2f') + 'seconds'))
+print("Elasped time: " + str(format(end_time - start_time, '.2f') + ' seconds'))
