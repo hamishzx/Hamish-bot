@@ -21,6 +21,8 @@ def province_check(incoming_list):
     for province in province_list:
         out_text = ''
         data_page = pywikibot.Page(site, "Template:PRC_admin/data/{0}/00/00/000/000".format(province))
+        if data_page.isRedirectPage:
+            data_page = data_page.getRedirectTarget()
         text = data_page.text
         out_text += province + '\t'
         if ("title" in text):
@@ -56,6 +58,8 @@ def city_check(province):
     for city in city_list:
         out_text = ''
         data_page = pywikibot.Page(site, "Template:PRC_admin/data/{0}/{1}/00/000/000".format(province, city))
+        if data_page.isRedirectPage:
+            data_page = data_page.getRedirectTarget()
         text = data_page.text
         if "fake=" in text:
             print('[INFO]Skip {0} {1} with fake tag'.format(province, city))
