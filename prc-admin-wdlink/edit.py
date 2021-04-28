@@ -49,4 +49,5 @@ for code in province_list:
         pywikibot.showDiff(data_page.text, text)
         data_page.text = text
         data_page.save(summary = "Updating wikidata item id from [[:d:{0}|{0}]] to [[:d:{1}|{1}]]".format(old_id, new_id), minor = False)
+    print('\n')
 print('Province check completed.\n {0} total, {1} delta.'.format(province_total, province_delta))
