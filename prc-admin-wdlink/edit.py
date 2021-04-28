@@ -55,11 +55,13 @@ def province_check(list):
             data_page.save(summary = "Updating wikidata item id from [[:d:{0}|{0}]] to [[:d:{1}|{1}]]".format(old_id, new_id), minor = False)
             out_text += '\n'
             print(out_text) # print detail only when updated
+        city_check(province)
     print('Province check completed.\n{0} total, {1} delta.'.format(province_total, province_delta), end='\n')
 
-def city_check(province, list):
+def city_check(province):
     print("Start city check\n")
-    city_list = list
+    city_list_page = pywikibot.Page(site, "Template:PRC_admin/list/{0}/00/00/000/000".format(province))
+    city_list = pattern.findall(city_list_page)
     city_total = len(city_list)
     city_delta = 0
 
@@ -91,8 +93,9 @@ def city_check(province, list):
             data_page.save(summary = "Updating wikidata item id from [[:d:{0}|{0}]] to [[:d:{1}|{1}]]".format(old_id, new_id), minor = False)
             out_text += '\n'
             print(out_text) # print detail only when updated
-    print('City check completed.\n{0} total, {1} delta.'.format(city_total, city_delta), end='\n')
+    print('City check for {0} completed.\n{1} total, {2} delta.'.format(province, city_total, city_delta), end='\n')
 
-
+if __name__ == '__main__':
+    province_check(province_list)
 end_time = time.time()
 print("Elasped time: " + str(format(end_time - start_time, '.2f') + ' seconds'))
