@@ -68,6 +68,9 @@ def city_check(province):
         name = name_pattern.findall(text)[0]
         width = 20 - len(name.encode("GBK")) + len(name)
         out_text += name.ljust(width) + '\t'
+        if "wikidata" not in text:
+            print('[ERR]Wikidata ID not found for {0} {1}!'.format(province, city))
+            continue
         old_id = wd_id_pattern.findall(text)[0]
         out_text += old_id + '\t'
         city_page = pywikibot.Page(site, name)
@@ -81,7 +84,7 @@ def city_check(province):
             data_page.save(summary = "Updating wikidata item id from [[:d:{0}|{0}]] to [[:d:{1}|{1}]]".format(old_id, new_id), minor = False)
             out_text += '\n'
             print(out_text) # print detail only when updated
-    print('City check for {0} completed.\n{1} total, {2} delta.'.format(province, city_total, city_delta), end='\n')
+    print('City check for {0} completed.\n{1} total, {2} delta.\n'.format(province, city_total, city_delta), end='----------\n')
 
 if __name__ == '__main__':
     # Province, City, Area, Street 分别对应省级、地级、县级、乡级的行政区划
