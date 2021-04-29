@@ -13,7 +13,7 @@ site = pywikibot.Site()
 site.login()
 
 def province_check(incoming_list):
-    print("Start province check\n")
+    print("Start check operations\n")
     province_list = incoming_list
     province_total = len(province_list)
     province_delta = 0
@@ -35,6 +35,8 @@ def province_check(incoming_list):
         old_id = wd_id_pattern.findall(text)[0]
         out_text += old_id + '\t'
         province_page = pywikibot.Page(site, name)
+        if (province_page.isRedirectPage()):
+            province_page = province_page.getRedirectTarget()
         new_id = pywikibot.ItemPage.fromPage(province_page).getID().casefold()
         out_text += new_id + '\t'
         if (new_id != old_id):
@@ -45,12 +47,10 @@ def province_check(incoming_list):
             data_page.save(summary = "Updating wikidata item id from [[:d:{0}|{0}]] to [[:d:{1}|{1}]]".format(old_id, new_id), minor = False)
             out_text += '\n'
             print(out_text) # print detail only when updated
-        if (province in province_list[:len(province_list) - 3]):
-            city_check(province)
-    print('Province check completed.\n{0} total, {1} delta.'.format(province_total, province_delta), end='\n')
+        city_check(province)
+    print('Check completed.\n{0} total, {1} delta.'.format(province_total, province_delta), end='\n')
 
 def city_check(province):
-    print("Start city check\n")
     city_list_page = pywikibot.Page(site, "Template:PRC_admin/list/{0}/00/00/000/000".format(province))
     city_list = pattern.findall(city_list_page.text)
     city_total = len(city_list)
@@ -79,6 +79,8 @@ def city_check(province):
         old_id = wd_id_pattern.findall(text)[0]
         out_text += old_id + '\t'
         city_page = pywikibot.Page(site, name)
+        if (city_page.isRedirectPage()):
+            city_page = city_page.getRedirectTarget()
         new_id = pywikibot.ItemPage.fromPage(city_page).getID().casefold()
         out_text += new_id + '\t'
         if (new_id != old_id):
