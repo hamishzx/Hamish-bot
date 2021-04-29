@@ -45,7 +45,8 @@ def province_check(incoming_list):
             data_page.save(summary = "Updating wikidata item id from [[:d:{0}|{0}]] to [[:d:{1}|{1}]]".format(old_id, new_id), minor = False)
             out_text += '\n'
             print(out_text) # print detail only when updated
-        city_check(province)
+        if (province in province_list[:len(province_list) - 3]):
+            city_check(province)
     print('Province check completed.\n{0} total, {1} delta.'.format(province_total, province_delta), end='\n')
 
 def city_check(province):
