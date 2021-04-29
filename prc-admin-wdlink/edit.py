@@ -158,6 +158,52 @@ def area_check(province, city):
     result_list[1] += area_delta
 # TODO: 简繁转换
 
+
+def street_check(province, city, area):
+    street_list_page = pywikibot.Page(site, "Template:PRC_admin/list/{0}/{1}/00/000/000".format(province, city))
+    street_list = pattern.findall(street_list_page.text)
+    street_total = len(street_list)
+    street_delta = 0
+
+    for street in street_list:
+        out_text = ''
+        data_page = pywikibot.Page(site, "Template:PRC_admin/data/{0}/{1}/{2}/{3}/000".format(province, city, area, street))
+        if data_page.isRedirectPage():
+            data_page = data_page.getRedirectTarget()
+        text = data_page.text
+        if "fake=" in text:
+            print('[INFO]Skip {0} {1} {2} {3} with fake tag'.format(province, city, area, street))
+            continue
+        out_text += province + ' '  + city + ' ' + area + ' ' + street + '\t'
+        if ("title" in text):
+            name_pattern = re.compile(r'title=(.*)\|')
+        else:
+            name_pattern = re.compile(r'name=(.*)\|')
+        name = name_pattern.findall(text)[0]
+        width = 20 - len(name.encode("GBK")) + len(name)
+        out_text += name.ljust(width) + '\t'
+        if "wikidata" not in text:
+            print('[ERR]Wikidata ID not found for {0} {1} {2} {3}!'.format(province, city, area, street))
+            continue
+        old_id = wd_id_pattern.findall(text)[0]
+        out_text += old_id.ljust(10) + '\t'
+        street_page = pywikibot.Page(site, name)
+        if (street_page.isRedirectPage()):
+            street_page = street_page.getRedirectTarget()
+        new_id = pywikibot.ItemPage.fromPage(street_page).getID().casefold()
+        out_text += new_id.ljust(10) + '\t'
+        if (new_id != old_id):
+            street_delta += 1
+            text = re.sub(old_id, new_id, text)
+            pywikibot.showDiff(data_page.text, text)
+            data_page.text = text
+            data_page.save(summary = "Updating wikidata item id from [[:d:{0}|{0}]] to [[:d:{1}|{1}]]".format(old_id, new_id), minor = False)
+            out_text += '\n'
+        print(out_text) # print detail only when updated
+    result_list[0] += street_total
+    result_list[1] += street_delta
+
+
 if __name__ == '__main__':
     print("Start check operations")
     province_check(province_list)
