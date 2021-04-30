@@ -62,6 +62,18 @@ def build_request(incoming_list):
                     main_check(request)
 
 
+def construct_table(elements)
+    table = '{| class="wikitable"\n'
+    table += "|+ Timestamp: " + time.asctime(time.localtime(time.time())) + "\n"
+    table += "! division code !! division name !! old_id !! new_id\n"
+
+    for delta in elements:
+        table += "| {0} || {1} || {2} || {3}\n|-\n"
+    table += "|}"
+    print table
+    return table
+
+
 def main_check(incoming_request):
     province = "00"
     city = "00"
