@@ -148,7 +148,11 @@ def main():
     for province in province_list:
         request = {"type": "province", "code": province}
         main_check(request)
-
+    table = construct_table(table_element)
+    table += "\n Checked {0} in total, including {1} delta."
+    table_page = pywikibot.Page(site, "User:Hamish-bot/prc-admin-check")
+    table_page.text = table
+    table_page.save(summary="Wikidata link check for prc_admin template completed.", minor=False)
     print('Check completed.\n{0} total, {1} delta.'.format(result_list[0], result_list[1]), end='\n')
 
 
