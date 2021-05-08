@@ -32,8 +32,6 @@ file_path_list = {
     "modules/twinklexfd.js",
     "morebits.css",
     "morebits.js",
-    "select2/select2.min.css",
-    "select2/select2.min.js",
     "twinkle.css",
     "twinkle.js",
     "twinkle-pagestyles.css"
@@ -54,8 +52,6 @@ for path in file_path_list:
     i += 1
     print(str(i) + "/" + str(len(file_path_list)) + ": " + path)
     source_url = 'https://raw.githubusercontent.com/xi-plus/twinkle/master/{0}'.format(path)
-    if "select2" in path:
-        path = path[8:]
     base_page = pywikibot.Page(site, prefix + str(path))
     base_text = base_page.text
     source_text = urllib.request.urlopen(source_url).read().decode('utf8')
