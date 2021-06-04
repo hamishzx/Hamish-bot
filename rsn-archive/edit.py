@@ -65,7 +65,9 @@ for section in text:
     processed = False
     publicizing = False
 
-    status = re.findall(r"\{\{(S|s)tatus\|(.*)\}\}", section)[0][1]
+    moved_pattern = r"\{\{(moveto|Movedto|Moveto|Moved to|Switchto|移动到|已移动至|移動到|已移動至)"
+    status_pattern = r"\{\{(S|s)tatus\|(.*)\}\}"
+    status = "done" if re.findall(moved_pattern, section) else re.findall(status_pattern, section)[0][1]
     print("status", status, end="\t")
     if status in cfg["publicizing_status"]:
         publicizing = True
