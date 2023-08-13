@@ -8,7 +8,7 @@ import datetime
 
 os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 import pywikibot
-from config import config_page_name  # pylint: disable=E0611,W0614
+# from config import config_page_name  # pylint: disable=E0611,W0614
 
 # def timeRecord(op, t):
     # user_page = pywikibot.Page(site, "User:Hamish-bot")
@@ -24,7 +24,7 @@ from config import config_page_name  # pylint: disable=E0611,W0614
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
 
-site = pywikibot.Site('zh', 'wikipedia', 'Hamish-bot')
+site = pywikibot.Site('zh', 'wikipedia')
 site.login()
 
 # config_page = pywikibot.Page(site, config_page_name)
@@ -36,11 +36,8 @@ site.login()
     # exit("disabled\n")
 today = datetime.datetime.now().__format__('%Y/%m/%d')
 afdPagePrefix = 'Wikipedia:頁面存廢討論/記錄/'
-
-afdPage = pywikibot.Page(site, afdPagePrefix + today)
-text = afdPage.text
-
-
+count = 0
+summary_prefix = "[[Wikipedia:机器人/申请/Hamish-bot/5|T5]]："
 pattern = re.compile(r'((== ?|=== ?)\[\[(:|))')
 
 modifyDate = 0
@@ -52,7 +49,16 @@ while modifyDate < 61:
     pageProcessed = text.count('{{delf}}')
     if pageToProcess == pageProcessed:
         op = True
-        continue
+        count += 1
+        text = text.replace('\n__NOINDEX__', '__NOINDEX__')
+        text = text.replace('\n<section begin=backlog />', '')
+        text = text.replace('\n<section end=backlog />', '')
+        text = text.replace('\n<!-- 討論結束後刪除本行 --> ', '')
+        pywikibot.showDiff(afdPage.text, text)
+        summary = "自動清除存廢討論頁面冗餘內容"
+        print(summary_prefix + summary)
+        afdPage.text = text
+        afdPage.save(summary=summary_prefix + summary, minor=True)
     print(afdPagePrefix + (datetime.datetime.now() - datetime.timedelta(days=modifyDate)).__format__('%Y/%m/%d'), end='\t')
     print(pageToProcess, end='\t')
     print(pageProcessed, end='\t')
