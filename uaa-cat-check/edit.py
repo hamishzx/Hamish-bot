@@ -25,11 +25,15 @@ catpage = pywikibot.Category(site, "Category:可能违反方针的用户名")
 for page in catpage.articles():
     if not re.search("User talk:", page.title()):
         continue
+    if '/' in page.title():
+        title = page.title[:page.title().find('/')]
+    else:
+        title = page.title()
     session = requests.Session()
     params = {
         "action": "query",
         "list": "blocks",
-        "bkusers": page.title()[10:],
+        "bkusers": title[10:],
         "format": "json"
     }
     blockinfo = session.get(url="https://zh.wikipedia.org/w/api.php", params=params).json()
