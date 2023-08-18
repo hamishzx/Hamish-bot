@@ -26,7 +26,7 @@ for page in catpage.articles():
     if not re.search("User talk:", page.title()):
         continue
     if '/' in page.title():
-        title = page.title[:page.title().find('/')]
+        title = page.title()[:page.title().find('/')]
     else:
         title = page.title()
     session = requests.Session()
