@@ -65,9 +65,11 @@ for section in text:
     processed = False
     publicizing = False
 
+    notSave_pattern = r"\{\{(不存檔|不存档|Do not archive|DNA|请勿存档|請勿存檔)\}\}"
     moved_pattern = r"\{\{(moveto|Movedto|Moveto|Moved to|Switchto|移动到|已移动至|移動到|已移動至)"
     status_pattern = r"\{\{(S|s)tatus\|(.*)\}\}"
     status = "done" if re.findall(moved_pattern, section) else re.findall(status_pattern, section)[0][1]
+    status = "not save" if re.findall(notSave_pattern, section) else re.findall(status_pattern, section)[0][1]
     print("status", status, end="\t")
     if status in cfg["publicizing_status"]:
         publicizing = True
@@ -89,7 +91,8 @@ for section in text:
             (processed and not publicizing and time.time() - lasttime.timestamp() > cfg["time_to_live_for_processed"])
             or (not processed and not publicizing and time.time() - lasttime.timestamp() > cfg["time_to_live_for_not_processed"])
         )
-            and lasttime != datetime.datetime(1, 1, 1)):
+            and lasttime != datetime.datetime(1, 1, 1))\
+            and status != "not save":
         target = (lasttime.year, lasttime.month)
         if target not in archivelist:
             archivelist[target] = []
