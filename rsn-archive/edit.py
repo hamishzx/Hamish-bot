@@ -27,7 +27,7 @@ os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
 rec_time = (datetime.datetime.now() + datetime.timedelta(hours = 8)).__format__('%d/%m/%y %H:%M')
 
-site = pywikibot.Site()
+site = pywikibot.Site("zh", "wikipedia")
 site.login()
 
 config_page = pywikibot.Page(site, config_page_name)
@@ -68,8 +68,15 @@ for section in text:
     notSave_pattern = r"\{\{(不存檔|不存档|Do not archive|DNA|请勿存档|請勿存檔)\}\}"
     moved_pattern = r"\{\{(moveto|Movedto|Moveto|Moved to|Switchto|移动到|已移动至|移動到|已移動至)"
     status_pattern = r"\{\{(S|s)tatus\|(.*)\}\}"
-    status = "done" if re.findall(moved_pattern, section) else re.findall(status_pattern, section)[0][1]
-    status = "not save" if re.findall(notSave_pattern, section) else re.findall(status_pattern, section)[0][1]
+    try:
+        status = "done" if re.findall(moved_pattern, section) else re.findall(status_pattern, section)[0][1]
+        status = "not save" if re.findall(notSave_pattern, section) else re.findall(status_pattern, section)[0][1]
+    except IndexError:
+        print("status not found")
+        section += "\n:{{ping|Hamish}}機械人無法識別此段落的狀態，請手動標記。--~~~~"
+        mainPageText += '\n\n' + section
+        print(mainPageText)
+        continue
     print("status", status, end="\t")
     if status in cfg["publicizing_status"]:
         publicizing = True
