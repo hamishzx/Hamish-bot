@@ -93,26 +93,26 @@ for section in text:
 
 if count == 0:
     timeRecord(op, rec_time)
-    exit("nothing changed")
-
-pywikibot.showDiff(ewippage.text, mainPageText)
-ewippage.text = mainPageText
-summary = cfg["main_page_summary"].format(count)
-print(summary)
-ewippage.save(summary=summary_prefix + summary, minor=False)
-op = True
-
-for target in archivelist:
-    archivepage = pywikibot.Page(site, cfg["archive_page_name"].format(target[0], target[1]))
-    text = archivepage.text
-    print(archivepage.title())
-    if not archivepage.exists():
-        text = cfg["archive_page_preload"]
-    text += "\n\n" + "\n\n".join(archivelist[target])
-
-    pywikibot.showDiff(archivepage.text, text)
-    archivepage.text = text
-    summary = cfg["archive_page_summary"].format(len(archivelist[target]))
+    print("nothing changed")
+else:
+    pywikibot.showDiff(ewippage.text, mainPageText)
+    ewippage.text = mainPageText
+    summary = cfg["main_page_summary"].format(count)
     print(summary)
-    archivepage.save(summary=summary_prefix + summary, minor=False)
-timeRecord(op, rec_time)
+    ewippage.save(summary=summary_prefix + summary, minor=False)
+    op = True
+
+    for target in archivelist:
+        archivepage = pywikibot.Page(site, cfg["archive_page_name"].format(target[0], target[1]))
+        text = archivepage.text
+        print(archivepage.title())
+        if not archivepage.exists():
+            text = cfg["archive_page_preload"]
+        text += "\n\n" + "\n\n".join(archivelist[target])
+
+        pywikibot.showDiff(archivepage.text, text)
+        archivepage.text = text
+        summary = cfg["archive_page_summary"].format(len(archivelist[target]))
+        print(summary)
+        archivepage.save(summary=summary_prefix + summary, minor=False)
+    timeRecord(op, rec_time)
