@@ -3,8 +3,8 @@
 # Time: 5 Aug 2024 18:11
 # Name: edit
 # Author: CHAU SHING SHING HAMISH
-import time
 
+import time
 import openpyxl
 import requests
 from bs4 import BeautifulSoup
