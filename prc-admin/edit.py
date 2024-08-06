@@ -3,7 +3,7 @@
 # Time: 5 Aug 2024 18:11
 # Name: edit
 # Author: CHAU SHING SHING HAMISH
-
+import openpyxl
 import requests
 from bs4 import BeautifulSoup
 
@@ -29,6 +29,8 @@ def get_province_list():
 
 def get_city_list(code):
     province = code[:2]
+    if province != '11':
+        return
     city_data = requests.get(base_url + province + '.html')
     city_data.encoding = 'utf-8'
 
@@ -103,19 +105,47 @@ def get_village_list(code):
     return villages_data
 
 
-if __name__ == '__main__':
-    get_province_list()
-    for province_code in provinces_data.keys():
-        print("Getting city list for province: " + provinces_data[province_code])
-        get_city_list(province_code)
-    for city_code in cities_data.keys():
-        print("Getting county list for city: " + cities_data[city_code])
-        get_county_list(city_code)
-    for county_code in counties_data.keys():
-        print("Getting town list for county: " + counties_data[county_code])
-        get_town_list(county_code)
-    for town_code in towns_data.keys():
-        print("Getting village list for town: " + towns_data[town_code])
-        get_village_list(town_code)
+def construct_sheet(data):
+    wb = openpyxl.load_workbook('query.xlsx')
+    sheet = wb.worksheets[0]
 
+    for admin in data:
+        if admin[2:] == '0000000000':
+            row_to_insert = [admin, data[admin], admin[:2], '00', '00', '000', '000', '', '', '', '']
+        elif admin[4:] == '00000000':
+            row_to_insert = [admin, data[admin], admin[:2], admin[2:4], '00', '000', '000', data[admin[:2]+'0000000000'], '', '', '']
+        elif admin[6:] == '000000':
+            row_to_insert = [admin, data[admin], admin[:2], admin[2:4], admin[4:6], '000', '000',
+                             data[admin[:2]+'0000000000'], data[admin[:4]+'00000000'], '', '']
+        elif admin[9:] == '000':
+            row_to_insert = [admin, data[admin], admin[:2], admin[2:4], admin[4:6], admin[6:9], '000',
+                             data[admin[:2]+'0000000000'], data[admin[:4]+'00000000'], data[admin[:6]+'000000'], '']
+        else:
+            row_to_insert = [admin, data[admin], admin[:2], admin[2:4], admin[4:6], admin[6:9], admin[9:12],
+                             data[admin[:2]+'0000000000'], data[admin[:4]+'00000000'], data[admin[:6]+'000000'],
+                             data[admin[:9]+'000']]
+        sheet.append(row_to_insert)
+    wb.save('query.xlsx')
+
+
+if __name__ == '__main__':
+    try:
+        get_province_list()
+        for province_code in provinces_data.keys():
+            print("Getting city list for province: " + provinces_data[province_code])
+            get_city_list(province_code)
+
+        for city_code in cities_data.keys():
+            print("Getting county list for city: " + cities_data[city_code])
+            get_county_list(city_code)
+        for county_code in counties_data.keys():
+            print("Getting town list for county: " + counties_data[county_code])
+            get_town_list(county_code)
+        for town_code in towns_data.keys():
+            print("Getting village list for town: " + towns_data[town_code])
+            get_village_list(town_code)
+        construct_sheet(admins_data)
+    except Exception as e:
+        print(e)
+        construct_sheet(admins_data)
     print(admins_data)
