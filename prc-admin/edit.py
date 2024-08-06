@@ -3,9 +3,12 @@
 # Time: 5 Aug 2024 18:11
 # Name: edit
 # Author: CHAU SHING SHING HAMISH
+import time
+
 import openpyxl
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 base_url = "https://www.stats.gov.cn/sj/tjbz/tjyqhdmhcxhfdm/2023/"
 admins_data = {}
@@ -33,7 +36,7 @@ def get_city_list(code):
     city_data.encoding = 'utf-8'
 
     city_soup = BeautifulSoup(city_data.text, 'html.parser')
-
+    cities_data.clear()
     for city_link in city_soup.find_all('tr', class_='citytr'):
         a_tags = city_link.find_all('a')
         if len(a_tags) == 2:
@@ -51,7 +54,7 @@ def get_county_list(code):
     county_data.encoding = 'utf-8'
 
     county_soup = BeautifulSoup(county_data.text, 'html.parser')
-
+    counties_data.clear()
     for county_link in county_soup.find_all('tr', class_='countytr'):
         a_tags = county_link.find_all('a')
         if len(a_tags) == 2:
@@ -70,7 +73,7 @@ def get_town_list(code):
     town_data.encoding = 'utf-8'
 
     town_soup = BeautifulSoup(town_data.text, 'html.parser')
-
+    towns_data.clear()
     for town_link in town_soup.find_all('tr', class_='towntr'):
         a_tags = town_link.find_all('a')
         if len(a_tags) == 2:
@@ -92,7 +95,7 @@ def get_village_list(code):
     village_data.encoding = 'utf-8'
 
     village_soup = BeautifulSoup(village_data.text, 'html.parser')
-
+    villages_data.clear()
     for village_link in village_soup.find_all('tr', class_='villagetr'):
         td_tags = village_link.find_all('td')
         if len(td_tags) == 3:
@@ -106,22 +109,23 @@ def get_village_list(code):
 def construct_sheet(data):
     wb = openpyxl.load_workbook('query.xlsx')
     sheet = wb.worksheets[0]
-
     for admin in data:
         if admin[2:] == '0000000000':
             row_to_insert = [admin, data[admin], admin[:2], '00', '00', '000', '000', '', '', '', '']
         elif admin[4:] == '00000000':
-            row_to_insert = [admin, data[admin], admin[:2], admin[2:4], '00', '000', '000', data[admin[:2]+'0000000000'], '', '', '']
+            row_to_insert = [admin, data[admin], admin[:2], admin[2:4], '00', '000', '000',
+                             admins_data[admin[:2]+'0000000000'], '', '', '']
         elif admin[6:] == '000000':
             row_to_insert = [admin, data[admin], admin[:2], admin[2:4], admin[4:6], '000', '000',
-                             data[admin[:2]+'0000000000'], data[admin[:4]+'00000000'], '', '']
+                             admins_data[admin[:2]+'0000000000'], admins_data[admin[:4]+'00000000'], '', '']
         elif admin[9:] == '000':
             row_to_insert = [admin, data[admin], admin[:2], admin[2:4], admin[4:6], admin[6:9], '000',
-                             data[admin[:2]+'0000000000'], data[admin[:4]+'00000000'], data[admin[:6]+'000000'], '']
+                             admins_data[admin[:2]+'0000000000'], admins_data[admin[:4]+'00000000'],
+                             admins_data[admin[:6]+'000000'], '']
         else:
             row_to_insert = [admin, data[admin], admin[:2], admin[2:4], admin[4:6], admin[6:9], admin[9:12],
-                             data[admin[:2]+'0000000000'], data[admin[:4]+'00000000'], data[admin[:6]+'000000'],
-                             data[admin[:9]+'000']]
+                             admins_data[admin[:2]+'0000000000'], admins_data[admin[:4]+'00000000'],
+                             admins_data[admin[:6]+'000000'], admins_data[admin[:9]+'000']]
         sheet.append(row_to_insert)
     wb.save('query.xlsx')
 
@@ -129,21 +133,19 @@ def construct_sheet(data):
 if __name__ == '__main__':
     try:
         get_province_list()
-        for province_code in provinces_data.keys():
-            print("Getting city list for province: " + provinces_data[province_code])
+        for province_code in tqdm(provinces_data.keys(), desc='Provinces'):
             get_city_list(province_code)
-
-        for city_code in cities_data.keys():
-            print("Getting county list for city: " + cities_data[city_code])
-            get_county_list(city_code)
-        for county_code in counties_data.keys():
-            print("Getting town list for county: " + counties_data[county_code])
-            get_town_list(county_code)
-        for town_code in towns_data.keys():
-            print("Getting village list for town: " + towns_data[town_code])
-            get_village_list(town_code)
-        construct_sheet(admins_data)
+            construct_sheet(cities_data)
+            for city_code in tqdm(cities_data.keys(), desc='Cities'):
+                get_county_list(city_code)
+                construct_sheet(counties_data)
+                for county_code in tqdm(counties_data.keys(), desc='Counties'):
+                    get_town_list(county_code)
+                    construct_sheet(towns_data)
+                    for town_code in tqdm(towns_data.keys(), desc='Towns'):
+                        get_village_list(town_code)
+                        construct_sheet(villages_data)
+            time.sleep(60)
     except Exception as e:
         print(e)
-        construct_sheet(admins_data)
-    print(admins_data)
+
