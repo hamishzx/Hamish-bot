@@ -29,8 +29,6 @@ def get_province_list():
 
 def get_city_list(code):
     province = code[:2]
-    if province != '11':
-        return
     city_data = requests.get(base_url + province + '.html')
     city_data.encoding = 'utf-8'
 
