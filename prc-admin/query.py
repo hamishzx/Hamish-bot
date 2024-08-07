@@ -129,7 +129,7 @@ def construct_sheet(data, p, n):
                              admins_data[admin[:2]+'0000000000'], admins_data[admin[:4]+'00000000'],
                              admins_data[admin[:6]+'000000'], admins_data[admin[:9]+'000']]
         sheet.append(row_to_insert)
-    workbook.save('Administration_'+p[:2]+'_'+n+'.xlsx')
+    workbook.save('Administration_'+p[:2]+'.xlsx')
 
 
 if __name__ == '__main__':
