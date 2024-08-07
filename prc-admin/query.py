@@ -3,7 +3,7 @@
 # Time: 5 Aug 2024 18:11
 # Name: edit
 # Author: CHAU SHING SHING HAMISH
-
+import re
 import time
 import openpyxl
 import requests
@@ -19,14 +19,15 @@ towns_data = {}
 villages_data = {}
 
 
-def get_province_list():
+def get_province_list(r):
     province_data = requests.get(base_url + 'index.html')
     province_data.encoding = 'utf-8'
-
+    s, e = map(int, r.split('-'))
     province_soup = BeautifulSoup(province_data.text, 'html.parser')
     for province_link in province_soup.find_all('a')[:-1]:
+        if int(province_link.get('href')[:2]) not in list(range(s, e+1)):
+            continue
         provinces_data.update({province_link.get('href')[:-5] + '0000000000': province_link.get_text()})
-    admins_data.update(provinces_data)
     return provinces_data
 
 
@@ -36,6 +37,7 @@ def get_city_list(code):
     city_data.encoding = 'utf-8'
 
     city_soup = BeautifulSoup(city_data.text, 'html.parser')
+    admins_data.update({code: provinces_data[code]})
     cities_data.clear()
     for city_link in city_soup.find_all('tr', class_='citytr'):
         a_tags = city_link.find_all('a')
@@ -106,10 +108,10 @@ def get_village_list(code):
     return villages_data
 
 
-def construct_sheet(data):
-    wb = openpyxl.load_workbook('query.xlsx')
-    sheet = wb.worksheets[0]
-    for admin in data:
+def construct_sheet(data, p, n):
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    for admin in tqdm(data, desc='Writing'):
         if admin[2:] == '0000000000':
             row_to_insert = [admin, data[admin], admin[:2], '00', '00', '000', '000', '', '', '', '']
         elif admin[4:] == '00000000':
@@ -127,25 +129,27 @@ def construct_sheet(data):
                              admins_data[admin[:2]+'0000000000'], admins_data[admin[:4]+'00000000'],
                              admins_data[admin[:6]+'000000'], admins_data[admin[:9]+'000']]
         sheet.append(row_to_insert)
-    wb.save('query.xlsx')
+    workbook.save('Administration_'+p[:2]+'_'+n+'.xlsx')
 
 
 if __name__ == '__main__':
     try:
-        get_province_list()
+        process_province_range = input('Please enter the province range: ')
+        get_province_list(process_province_range)
+        print(provinces_data)
         for province_code in tqdm(provinces_data.keys(), desc='Provinces'):
+            print("Processing province: " + provinces_data[province_code])
             get_city_list(province_code)
-            construct_sheet(cities_data)
             for city_code in tqdm(cities_data.keys(), desc='Cities'):
                 get_county_list(city_code)
-                construct_sheet(counties_data)
                 for county_code in tqdm(counties_data.keys(), desc='Counties'):
                     get_town_list(county_code)
-                    construct_sheet(towns_data)
                     for town_code in tqdm(towns_data.keys(), desc='Towns'):
                         get_village_list(town_code)
-                        construct_sheet(villages_data)
-            time.sleep(60)
+            construct_sheet(admins_data, province_code, provinces_data[province_code])
+            admins_data.clear()
+            print('The data has been saved, sleeping...')
+            time.sleep(30)
     except Exception as e:
         print(e)
 
