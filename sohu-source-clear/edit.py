@@ -13,7 +13,7 @@ import pywikibot
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
 
-todo_list = site.search('insource:"www.sohu.com/a/www.sohu.com/"')
+todo_list = site.search('insource:"www.sohu.com/a/www.sohu.com/"', namespace=0)
 
 for page in todo_list:
     text = page.text
