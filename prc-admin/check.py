@@ -85,7 +85,7 @@ def verify_integrity():
         province_list_page = pywikibot.Page(site, 'Template:PRC_admin/list/' + province + '/00/00/000/000')
         province_data_page = pywikibot.Page(site, 'Template:PRC_admin/data/' + province + '/00/00/000/000')
         province_name = re.findall(r'name=(.*)\|', province_data_page.text)[0]
-        cities = pattern.findall(province_list_page.text)
+        cities = re.compile(r'\|(\d{2})').findall(province_list_page.text)
         province_subdivisions = show_subdivisions(province_data_sheet, province_name)
         province_compare_result = compare_data(province_name, cities, province_subdivisions, 3)
         for c in province_compare_result[1]:
@@ -113,10 +113,10 @@ def verify_integrity():
                     table += construct_table([city_data[0][0], city_name, city_list_page.title(),
                                               city_data_page.title(), '名稱或已變更'], 'shared')
             elif city in province_compare_result[2]:
-                table += construct_table([city_data[0][0], city_name, city_list_page, city_data_page, '數據庫缺失']
-                                         , 'data')
+                table += construct_table([province+city+'00000000',
+                                          city_name, city_list_page, city_data_page, '數據庫缺失'], 'data')
 
-            counties = pattern.findall(city_list_page.text)
+            counties = re.compile(r'\|(\d{2})').findall(city_list_page.text)
             city_subdivisions = show_subdivisions(province_data_sheet, city_name, city)
             city_compare_result = compare_data(city_name, counties, city_subdivisions, 4)
 
@@ -143,10 +143,10 @@ def verify_integrity():
                         table += construct_table([county_data[0][0], county_name, county_list_page.title(),
                                                   county_data_page.title(), '名稱或已變更'], 'shared')
                 elif county in city_compare_result[2]:
-                    table += construct_table([county_data[0][0], county_name, county_list_page.title(),
+                    table += construct_table([province+city+county+'000000', county_name, county_list_page.title(),
                                               county_data_page.title(), '數據庫缺失'], 'data')
 
-                towns = pattern.findall(county_list_page.text)
+                towns = re.compile(r'\|(\d{3})').findall(county_list_page.text)
                 county_subdivisions = show_subdivisions(province_data_sheet, county_name, city, county)
                 county_compare_result = compare_data(county_name, towns, county_subdivisions, 5)
 
@@ -173,10 +173,11 @@ def verify_integrity():
                             table += construct_table([town_data[0][0], town_name, town_list_page.title(),
                                                       town_data_page.title(), '名稱或已變更'], 'shared')
                     elif town in county_compare_result[2]:
-                        table += construct_table([town_data[0][0], town_name, town_list_page.title(),
+                        table += construct_table([province+city+county+town+'000',
+                                                  town_name, town_list_page.title(),
                                                   town_data_page.title(), '數據庫缺失'], 'data')
 
-                    villages = pattern.findall(town_list_page.text)
+                    villages = re.compile(r'\|(\d{3})').findall(town_list_page.text)
                     town_subdivisions = show_subdivisions(province_data_sheet, town_name, city, county, town)
                     town_compare_result = compare_data(town_name, villages, town_subdivisions, 6)
 
@@ -203,7 +204,8 @@ def verify_integrity():
                                 table += construct_table([village_data[0][0], village_name, village_list_page.title(),
                                                           village_data_page.title(), '名稱或已變更'], 'shared')
                         elif village in town_compare_result[2]:
-                            table += construct_table([village_data[0][0], village_name, village_list_page.title(),
+                            table += construct_table([province+city+county+town+village,
+                                                      village_name, village_list_page.title(),
                                                       village_data_page.title(), '數據庫缺失'], 'data')
         table += '\n|}'
         user_page = pywikibot.Page(site, 'User:Hamish-bot/PRC_admin/' + province)
