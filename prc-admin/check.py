@@ -92,7 +92,7 @@ def verify_integrity():
             c_data = [p for p in province_subdivisions if p[3] == c]
             table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
-        for city in tqdm(cities, desc='Processing Cities'):
+        for city in tqdm(cities, desc='正在處理' + province_name):
             city_data = [p for p in province_subdivisions if p[3] == city]
             city_list_page = pywikibot.Page(site, 'Template:PRC_admin/list/' + province + '/' + city + '/00/000/000')
             city_data_page = pywikibot.Page(site, 'Template:PRC_admin/data/' + province + '/' + city + '/00/000/000')
@@ -124,7 +124,7 @@ def verify_integrity():
                 c_data = [p for p in city_subdivisions if p[4] == c]
                 table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
-            for county in tqdm(counties, desc='Processing Counties'):
+            for county in tqdm(counties, desc='正在處理' + city_name):
                 county_data = [p for p in city_subdivisions if p[4] == county]
                 county_list_page = pywikibot.Page(site,
                                                   'Template:PRC_admin/list/' + province + '/' + city + '/' + county + '/000/000')
@@ -154,7 +154,7 @@ def verify_integrity():
                     c_data = [p for p in county_subdivisions if p[5] == c]
                     table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
-                for town in tqdm(towns, desc='Processing Towns'):
+                for town in tqdm(towns, desc='正在處理' + county_name):
                     town_data = [p for p in county_subdivisions if p[5] == town]
                     town_list_page = pywikibot.Page(site,
                                                     'Template:PRC_admin/list/' + province + '/' + city + '/' + county + '/' + town + '/000')
@@ -185,7 +185,7 @@ def verify_integrity():
                         c_data = [p for p in town_subdivisions if p[6] == c]
                         table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
-                    for village in tqdm(villages, desc='Processing Villages'):
+                    for village in tqdm(villages, desc='正在處理' + town_name):
                         village_data = [p for p in town_subdivisions if p[6] == village]
                         village_list_page = pywikibot.Page(site,
                                                           'Template:PRC_admin/list/' + province + '/' + city + '/' + county + '/' + town + '/' + village)
