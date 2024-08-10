@@ -24,6 +24,7 @@ def construct_table(data, t):
         table += '\n|-\n| {0} || {1} || 1 || 0 || {2} || {3}'.format(data[0], data[1], data[2], data[4])
     elif t == 'page':
         table += '\n|-\n| {0} || {1} || 0 || 1 || {2} || {3}'.format(data[0], data[1], data[2], data[4])
+    print(table)
     return table
 
 
@@ -35,20 +36,20 @@ def show_subdivisions(*args):
     if len(args) == 2:
         # case show city
         for r in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
-            if r[4:7] == ('00', '000', '000'):
+            if r[4:7] == ('00', '000', '000') and r[3] != '00':
                 subdivisions.append(r)
     elif len(args) == 3:
         # case show county
         city_to_show = args[2]
         for r in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
-            if r[5:7] == ('000', '000') and r[3] == city_to_show:
+            if r[5:7] == ('000', '000') and r[3] == city_to_show and r[4] != '00':
                 subdivisions.append(r)
     elif len(args) == 4:
         # case show town
         city_to_show = args[2]
         county_to_show = args[3]
         for r in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
-            if r[6] == '000' and r[3:5] == (city_to_show, county_to_show):
+            if r[6] == '000' and r[3:5] == (city_to_show, county_to_show) and r[5] != '000':
                 subdivisions.append(r)
     elif len(args) == 5:
         # case show village
