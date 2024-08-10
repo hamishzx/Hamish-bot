@@ -3,7 +3,7 @@ apicache-py3
 __pycache__
 */apicache-py3
 */__pycache__
-*/pywikibot.lwp
+*/*.lwp
 */throttle.ctrl
 pywikibot.lwp
 throttle.ctrl
@@ -11,6 +11,8 @@ throttle.ctrl
 user*
 */config.py
 config.py
+apicache
+*/apicache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -160,3 +162,4 @@ dmypy.json
 /prc-admin/apicache/b7eeda770376fe85e369ea49b3d968961257b3282f23ccc9a20c8f59d14b5216
 /prc-admin/pywikibot-Hamish-bot.lwp
 /prc-admin/~$Administration_43.xlsx
+/prc-admin/apicache/
