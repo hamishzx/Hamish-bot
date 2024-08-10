@@ -13,6 +13,19 @@ site = pywikibot.Site('zh', 'wikipedia')
 site.login()
 
 
+def construct_table(data, t):
+    table = ''
+    if data[2] != '':
+        data[2] = '[[' + data[2] + '|list]] - [[' + data[3] + '|data]]'
+    if t == 'shared':
+        table += '\n|-\n| {0} || {1} || 1 || 1 || {2} || {3}'.format(data[0], data[1], data[2], data[4])
+    elif t == 'data':
+        table += '\n|-\n| {0} || {1} || 1 || 0 || {2} || {3}'.format(data[0], data[1], data[2], data[4])
+    elif t == 'page':
+        table += '\n|-\n| {0} || {1} || 0 || 1 || {2} || {3}'.format(data[0], data[1], data[2], data[4])
+    return table
+
+
 def show_subdivisions(*args):
     sheet = args[0]
     process_admin_name = args[1]
@@ -23,16 +36,12 @@ def show_subdivisions(*args):
         for r in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
             if r[4:7] == ('00', '000', '000'):
                 subdivisions.append(r)
-        print(process_admin_name + '地级行政区划：')
-        print(subdivisions)
     elif len(args) == 3:
         # case show county
         city_to_show = args[2]
         for r in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
             if r[5:7] == ('000', '000') and r[3] == city_to_show:
                 subdivisions.append(r)
-        print(process_admin_name + '县级行政区划：')
-        print(subdivisions)
     elif len(args) == 4:
         # case show town
         city_to_show = args[2]
@@ -40,8 +49,6 @@ def show_subdivisions(*args):
         for r in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
             if r[6] == '000' and r[3:5] == (city_to_show, county_to_show):
                 subdivisions.append(r)
-        print(process_admin_name + '乡级行政区划：')
-        print(subdivisions)
     elif len(args) == 5:
         # case show village
         city_to_show = args[2]
@@ -50,8 +57,6 @@ def show_subdivisions(*args):
         for r in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
             if r[6] != '000' and r[3:6] == (city_to_show, county_to_show, town_to_show):
                 subdivisions.append(r)
-        print(process_admin_name + '村级行政区划：')
-        print(subdivisions)
     return subdivisions
 
 
@@ -63,13 +68,16 @@ def compare_data(name, data, subs, level):
     data_process = [x for x in data_process if x not in shared]
     subs_process = [x for x in subs_process if x not in shared]
     if not data_process and not subs_process:
-        print(name + '数据处理结果与页面中一致')
+        print(name + '數據處理結果：數據與頁面一致')
     else:
-        print(name + '数据处理结果：')
+        print(name + '數據處理結果：')
         if data_process:
-            print(str(data_process) + '是页面中含有但数据中没有的行政区划代码')
+            print(str(data_process) + '是數據中含有但頁面中没有的行政区划代码')
         if subs_process:
-            print(str(subs_process) + '是数据中含有但页面中没有的行政区划代码')
+            print(str(subs_process) + '是頁面中含有但數據中没有的行政区划代码')
+
+    result = [shared, data_process, subs_process]
+    return result
 
 
 def verify_integrity():
@@ -78,6 +86,7 @@ def verify_integrity():
     provinces = pattern.findall(base_page.text)
     provinces = ['43']
     for province in provinces:
+        table = '{| class="wikitable sortable"\n|-\n! 行政區劃代碼 !! 行政區劃名稱 !! 站內 !! 數據庫 !! 連結 !! 備註'
         province_data = openpyxl.load_workbook('Administration_' + province + '.xlsx')
         province_data_sheet = province_data.active
         province_list_page = pywikibot.Page(site, 'Template:PRC_admin/list/' + province + '/00/00/000/000')
@@ -85,35 +94,93 @@ def verify_integrity():
         province_name = re.findall(r'name=(.*)\|', province_data_page.text)[0]
         cities = pattern.findall(province_list_page.text)
         province_subdivisions = show_subdivisions(province_data_sheet, province_name)
-        compare_data(province_name, cities, province_subdivisions, 3)
+        province_compare_result = compare_data(province_name, cities, province_subdivisions, 3)
+        for c in province_compare_result[1]:
+            c_data = [p for p in province_subdivisions if p[3] == c]
+            table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
         for city in cities:
+            city_data = [p for p in province_subdivisions if p[3] == city]
             city_list_page = pywikibot.Page(site, 'Template:PRC_admin/list/' + province + '/' + city + '/00/000/000')
             city_data_page = pywikibot.Page(site, 'Template:PRC_admin/data/' + province + '/' + city + '/00/000/000')
             city_name = re.findall(r'name=(.*)\|', city_data_page.text)[0]
+
+            if city in province_compare_result[0]:
+                if city_name == city_data[0][1]:
+                    table += construct_table([city_data[0][0], city_name, city_list_page.title(),
+                                              city_data_page.title(), ''], 'shared')
+                else:
+                    table += construct_table([city_data[0][0], city_name, city_list_page.title(),
+                                              city_data_page.title(), '名稱或已變更'], 'shared')
+            elif city in province_compare_result[1]:
+                table += construct_table([city_data[0][0], city_name, city_list_page, city_data_page, '數據庫缺失']
+                                         , 'data')
+
             counties = pattern.findall(city_list_page.text)
             city_subdivisions = show_subdivisions(province_data_sheet, city_name, city)
-            compare_data(city_name, counties, city_subdivisions, 4)
+            city_compare_result = compare_data(city_name, counties, city_subdivisions, 4)
+
+            for c in city_compare_result[1]:
+                c_data = [p for p in city_subdivisions if p[4] == c]
+                table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
             for county in counties:
+                county_data = [p for p in city_subdivisions if p[4] == county]
                 county_list_page = pywikibot.Page(site,
                                                   'Template:PRC_admin/list/' + province + '/' + city + '/' + county + '/000/000')
                 county_data_page = pywikibot.Page(site,
                                                   'Template:PRC_admin/data/' + province + '/' + city + '/' + county + '/000/000')
                 county_name = re.findall(r'name=(.*)\|', county_data_page.text)[0]
+
+                if county in city_compare_result[0]:
+                    if county_name == county_data[0][1]:
+                        table += construct_table([county_data[0][0], county_name, county_list_page.title(),
+                                                  county_data_page.title(), ''], 'shared')
+                    else:
+                        table += construct_table([county_data[0][0], county_name, county_list_page.title(),
+                                                  county_data_page.title(), '名稱或已變更'], 'shared')
+                elif county in city_compare_result[1]:
+                    table += construct_table([county_data[0][0], county_name, county_list_page.title(),
+                                              county_data_page.title(), '數據庫缺失'], 'data')
+
                 towns = pattern.findall(county_list_page.text)
                 county_subdivisions = show_subdivisions(province_data_sheet, county_name, city, county)
-                compare_data(county_name, towns, county_subdivisions, 5)
+                county_compare_result = compare_data(county_name, towns, county_subdivisions, 5)
+
+                for c in county_compare_result[1]:
+                    c_data = [p for p in county_subdivisions if p[5] == c]
+                    table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
                 for town in towns:
+                    town_data = [p for p in county_subdivisions if p[5] == town]
                     town_list_page = pywikibot.Page(site,
                                                     'Template:PRC_admin/list/' + province + '/' + city + '/' + county + '/' + town + '/000')
                     town_data_page = pywikibot.Page(site,
                                                     'Template:PRC_admin/data/' + province + '/' + city + '/' + county + '/' + town + '/000')
                     town_name = re.findall(r'name=(.*)\|', town_data_page.text)[0]
+
+                    if town in county_compare_result[0]:
+                        if town_name == town_data[0][1]:
+                            table += construct_table([town_data[0][0], town_name, town_list_page.title(),
+                                                      town_data_page.title(), ''], 'shared')
+                        else:
+                            table += construct_table([town_data[0][0], town_name, town_list_page.title(),
+                                                      town_data_page.title(), '名稱或已變更'], 'shared')
+                    elif town in county_compare_result[1]:
+                        table += construct_table([town_data[0][0], town_name, town_list_page.title(),
+                                                  town_data_page.title(), '數據庫缺失'], 'data')
+
                     villages = pattern.findall(town_list_page.text)
                     town_subdivisions = show_subdivisions(province_data_sheet, town_name, city, county, town)
-                    compare_data(town_name, villages, town_subdivisions, 6)
+                    town_compare_result = compare_data(town_name, villages, town_subdivisions, 6)
+
+                    for c in town_compare_result[1]:
+                        c_data = [p for p in town_subdivisions if p[6] == c]
+                        table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
+        table += '\n|}'
+        user_page = pywikibot.Page(site, 'User:Hamish-bot/PRC_admin/' + province)
+        user_page.text = table
+        user_page.save(summary='Bot: Update PRC admin list result')
 
 
 if __name__ == '__main__':
