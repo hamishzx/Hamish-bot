@@ -88,7 +88,7 @@ def verify_integrity():
         cities = pattern.findall(province_list_page.text)
         province_subdivisions = show_subdivisions(province_data_sheet, province_name)
         province_compare_result = compare_data(province_name, cities, province_subdivisions, 3)
-        for c in province_compare_result[2]:
+        for c in province_compare_result[1]:
             c_data = [p for p in province_subdivisions if p[3] == c]
             table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
@@ -112,7 +112,7 @@ def verify_integrity():
                 else:
                     table += construct_table([city_data[0][0], city_name, city_list_page.title(),
                                               city_data_page.title(), '名稱或已變更'], 'shared')
-            elif city in province_compare_result[1]:
+            elif city in province_compare_result[2]:
                 table += construct_table([city_data[0][0], city_name, city_list_page, city_data_page, '數據庫缺失']
                                          , 'data')
 
@@ -120,7 +120,7 @@ def verify_integrity():
             city_subdivisions = show_subdivisions(province_data_sheet, city_name, city)
             city_compare_result = compare_data(city_name, counties, city_subdivisions, 4)
 
-            for c in city_compare_result[2]:
+            for c in city_compare_result[1]:
                 c_data = [p for p in city_subdivisions if p[4] == c]
                 table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
@@ -142,7 +142,7 @@ def verify_integrity():
                     else:
                         table += construct_table([county_data[0][0], county_name, county_list_page.title(),
                                                   county_data_page.title(), '名稱或已變更'], 'shared')
-                elif county in city_compare_result[1]:
+                elif county in city_compare_result[2]:
                     table += construct_table([county_data[0][0], county_name, county_list_page.title(),
                                               county_data_page.title(), '數據庫缺失'], 'data')
 
@@ -150,7 +150,7 @@ def verify_integrity():
                 county_subdivisions = show_subdivisions(province_data_sheet, county_name, city, county)
                 county_compare_result = compare_data(county_name, towns, county_subdivisions, 5)
 
-                for c in county_compare_result[2]:
+                for c in county_compare_result[1]:
                     c_data = [p for p in county_subdivisions if p[5] == c]
                     table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
@@ -172,7 +172,7 @@ def verify_integrity():
                         else:
                             table += construct_table([town_data[0][0], town_name, town_list_page.title(),
                                                       town_data_page.title(), '名稱或已變更'], 'shared')
-                    elif town in county_compare_result[1]:
+                    elif town in county_compare_result[2]:
                         table += construct_table([town_data[0][0], town_name, town_list_page.title(),
                                                   town_data_page.title(), '數據庫缺失'], 'data')
 
@@ -180,9 +180,31 @@ def verify_integrity():
                     town_subdivisions = show_subdivisions(province_data_sheet, town_name, city, county, town)
                     town_compare_result = compare_data(town_name, villages, town_subdivisions, 6)
 
-                    for c in town_compare_result[2]:
+                    for c in town_compare_result[1]:
                         c_data = [p for p in town_subdivisions if p[6] == c]
                         table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
+
+                    for village in tqdm(villages, desc='Processing Villages'):
+                        village_data = [p for p in town_subdivisions if p[6] == village]
+                        village_list_page = pywikibot.Page(site,
+                                                          'Template:PRC_admin/list/' + province + '/' + city + '/' + county + '/' + town + '/' + village)
+                        village_data_page = pywikibot.Page(site,
+                                                          'Template:PRC_admin/data/' + province + '/' + city + '/' + county + '/' + town + '/' + village)
+                        try:
+                            village_name = re.findall(r'name=(.*)\|', village_data_page.text)[0]
+                        except IndexError:
+                            village_name = 'IndexError'
+
+                        if village in town_compare_result[0]:
+                            if village_name == village_data[0][1]:
+                                table += construct_table([village_data[0][0], village_name, village_list_page.title(),
+                                                          village_data_page.title(), ''], 'shared')
+                            else:
+                                table += construct_table([village_data[0][0], village_name, village_list_page.title(),
+                                                          village_data_page.title(), '名稱或已變更'], 'shared')
+                        elif village in town_compare_result[2]:
+                            table += construct_table([village_data[0][0], village_name, village_list_page.title(),
+                                                      village_data_page.title(), '數據庫缺失'], 'data')
         table += '\n|}'
         user_page = pywikibot.Page(site, 'User:Hamish-bot/PRC_admin/' + province)
         user_page.text = table
