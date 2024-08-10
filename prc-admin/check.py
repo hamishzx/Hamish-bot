@@ -8,6 +8,7 @@ import re
 
 import openpyxl
 import pywikibot
+from tqdm import tqdm
 
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
@@ -67,14 +68,6 @@ def compare_data(name, data, subs, level):
     shared = data_process & subs_process
     data_process = [x for x in data_process if x not in shared]
     subs_process = [x for x in subs_process if x not in shared]
-    if not data_process and not subs_process:
-        print(name + '數據處理結果：數據與頁面一致')
-    else:
-        print(name + '數據處理結果：')
-        if data_process:
-            print(str(data_process) + '是數據中含有但頁面中没有的行政区划代码')
-        if subs_process:
-            print(str(subs_process) + '是頁面中含有但數據中没有的行政区划代码')
 
     result = [shared, data_process, subs_process]
     return result
@@ -84,8 +77,8 @@ def verify_integrity():
     base_page = pywikibot.Page(site, 'Template:PRC_admin/list/00/00/00/000/000')
     pattern = re.compile(r'\|(\d{2,3})')
     provinces = pattern.findall(base_page.text)
-    provinces = ['43']
-    for province in provinces:
+
+    for province in tqdm(provinces, desc='Processing Provinces'):
         table = '{| class="wikitable sortable"\n|-\n! 行政區劃代碼 !! 行政區劃名稱 !! 站內 !! 數據庫 !! 連結 !! 備註'
         province_data = openpyxl.load_workbook('Administration_' + province + '.xlsx')
         province_data_sheet = province_data.active
@@ -95,20 +88,27 @@ def verify_integrity():
         cities = pattern.findall(province_list_page.text)
         province_subdivisions = show_subdivisions(province_data_sheet, province_name)
         province_compare_result = compare_data(province_name, cities, province_subdivisions, 3)
-        for c in province_compare_result[1]:
+        for c in province_compare_result[2]:
             c_data = [p for p in province_subdivisions if p[3] == c]
             table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
-        for city in cities:
+        for city in tqdm(cities, desc='Processing Cities'):
             city_data = [p for p in province_subdivisions if p[3] == city]
             city_list_page = pywikibot.Page(site, 'Template:PRC_admin/list/' + province + '/' + city + '/00/000/000')
             city_data_page = pywikibot.Page(site, 'Template:PRC_admin/data/' + province + '/' + city + '/00/000/000')
-            city_name = re.findall(r'name=(.*)\|', city_data_page.text)[0]
+            try:
+                city_name = re.findall(r'name=(.*)\|', city_data_page.text)[0]
+            except IndexError:
+                city_name = 'IndexError'
 
             if city in province_compare_result[0]:
                 if city_name == city_data[0][1]:
-                    table += construct_table([city_data[0][0], city_name, city_list_page.title(),
-                                              city_data_page.title(), ''], 'shared')
+                    if city_name == 'IndexError':
+                        table += construct_table([city_data[0][0], city_name, city_list_page.title(),
+                                                  city_data_page.title(), 'IndexError，檢查數據準確性'], 'shared')
+                    else:
+                        table += construct_table([city_data[0][0], city_name, city_list_page.title(),
+                                                city_data_page.title(), ''], 'shared')
                 else:
                     table += construct_table([city_data[0][0], city_name, city_list_page.title(),
                                               city_data_page.title(), '名稱或已變更'], 'shared')
@@ -120,17 +120,20 @@ def verify_integrity():
             city_subdivisions = show_subdivisions(province_data_sheet, city_name, city)
             city_compare_result = compare_data(city_name, counties, city_subdivisions, 4)
 
-            for c in city_compare_result[1]:
+            for c in city_compare_result[2]:
                 c_data = [p for p in city_subdivisions if p[4] == c]
                 table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
-            for county in counties:
+            for county in tqdm(counties, desc='Processing Counties'):
                 county_data = [p for p in city_subdivisions if p[4] == county]
                 county_list_page = pywikibot.Page(site,
                                                   'Template:PRC_admin/list/' + province + '/' + city + '/' + county + '/000/000')
                 county_data_page = pywikibot.Page(site,
                                                   'Template:PRC_admin/data/' + province + '/' + city + '/' + county + '/000/000')
-                county_name = re.findall(r'name=(.*)\|', county_data_page.text)[0]
+                try:
+                    county_name = re.findall(r'name=(.*)\|', county_data_page.text)[0]
+                except IndexError:
+                    county_name = 'IndexError'
 
                 if county in city_compare_result[0]:
                     if county_name == county_data[0][1]:
@@ -147,17 +150,20 @@ def verify_integrity():
                 county_subdivisions = show_subdivisions(province_data_sheet, county_name, city, county)
                 county_compare_result = compare_data(county_name, towns, county_subdivisions, 5)
 
-                for c in county_compare_result[1]:
+                for c in county_compare_result[2]:
                     c_data = [p for p in county_subdivisions if p[5] == c]
                     table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
 
-                for town in towns:
+                for town in tqdm(towns, desc='Processing Towns'):
                     town_data = [p for p in county_subdivisions if p[5] == town]
                     town_list_page = pywikibot.Page(site,
                                                     'Template:PRC_admin/list/' + province + '/' + city + '/' + county + '/' + town + '/000')
                     town_data_page = pywikibot.Page(site,
                                                     'Template:PRC_admin/data/' + province + '/' + city + '/' + county + '/' + town + '/000')
-                    town_name = re.findall(r'name=(.*)\|', town_data_page.text)[0]
+                    try:
+                        town_name = re.findall(r'name=(.*)\|', town_data_page.text)[0]
+                    except IndexError:
+                        town_name = 'IndexError'
 
                     if town in county_compare_result[0]:
                         if town_name == town_data[0][1]:
@@ -174,7 +180,7 @@ def verify_integrity():
                     town_subdivisions = show_subdivisions(province_data_sheet, town_name, city, county, town)
                     town_compare_result = compare_data(town_name, villages, town_subdivisions, 6)
 
-                    for c in town_compare_result[1]:
+                    for c in town_compare_result[2]:
                         c_data = [p for p in town_subdivisions if p[6] == c]
                         table += construct_table([c_data[0][0], c_data[0][1], '', '', '模板頁缺失'], 'page')
         table += '\n|}'
