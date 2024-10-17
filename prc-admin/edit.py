@@ -134,6 +134,7 @@ def build_list_page(*args):
     return text
 
 df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin.xlsx', dtype=str)
+processed_df = pd.DataFrame(columns=df.columns)
 try:
     for index, row in df.iterrows():
         data = row.to_list()
@@ -214,8 +215,8 @@ try:
                 if input('Update list page? (1/2)') == '1':
                     list_page.text = list_page_text
                     list_page.save(summary='更新區劃下級列表')
-        df.drop(index, inplace=True)
+        processed_df = pd.concat([pd.DataFrame([row], columns=df.columns), processed_df], ignore_index=True)
 except KeyboardInterrupt:
     print('Interrupted by user')
-    df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin.xlsx', index=False)
+    processed_df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin_done.xlsx', index=False)
     print('Data saved')
