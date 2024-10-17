@@ -77,15 +77,8 @@ def get_data(title, code):
         except NoSiteLinkError:
             pass
         return data_dict
-    except IndexError:
-        return {
-            'id': '',
-            'name': '',
-            'lat': '',
-            'lon': '',
-            'link': '',
-        }
-    except KeyError:
+    except Exception as e:
+        print(e)
         return {
             'id': '',
             'name': '',
