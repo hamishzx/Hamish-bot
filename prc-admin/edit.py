@@ -10,7 +10,7 @@ import pywikibot
 from pywikibot.data.api import Request
 import pandas as pd
 from pywikibot.exceptions import NoSiteLinkError
-from tqdm import tqdm
+from progress.bar import Bar
 
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
@@ -132,7 +132,7 @@ def build_list_page(*args):
     return text
 
 df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin.xlsx', dtype=str)
-for a in tqdm(range(len(df))):
+with Bar(fill='@', suffix='%(percent).1f%% - %(eta)ds', max=len(df)) as bar:
     for index, row in df.iterrows():
         data = row.to_list()
         # ['110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡']
@@ -212,4 +212,4 @@ for a in tqdm(range(len(df))):
                 if input('Update list page? (1/2)') == '1':
                     list_page.text = list_page_text
                     list_page.save(summary='更新區劃下級列表')
-    a+=1
+        bar.next()
