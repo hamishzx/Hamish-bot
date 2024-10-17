@@ -3,6 +3,7 @@
 # Time: 10 Aug 2024 22:53
 # Name: edit.py
 # Author: CHAU SHING SHING HAMISH
+import os
 
 import pywikibot
 from pywikibot.data.api import Request
@@ -123,7 +124,7 @@ def build_list_page(*args):
     text += '|\narg={{{arg|}}}}}'
     return text
 
-df = pd.read_excel('admin.xlsx', dtype=str)
+df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + 'admin.xlsx', dtype=str)
 
 for index, row in df.iterrows():
     data = row.to_list()
@@ -171,7 +172,7 @@ for index, row in df.iterrows():
         data_page.text = data_page_text
         data_page.save(summary='建立區劃數據')
 
-    if village_code != '000':
+    if village_code == '000':
         list_page_text = ''
         if admin_type == 'province':
             list_page_text = build_list_page(df, province_code)
@@ -186,5 +187,6 @@ for index, row in df.iterrows():
                                      f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
         if not list_page.exists():
             print(list_page_text)
-            list_page.text = list_page_text
-            list_page.save(summary='建立區劃下級列表')
+            if input('Create list page? (y/n)') == 'y':
+                list_page.text = list_page_text
+                list_page.save(summary='建立區劃下級列表')
