@@ -10,7 +10,7 @@ import pywikibot
 from pywikibot.data.api import Request
 import pandas as pd
 from pywikibot.exceptions import NoSiteLinkError
-from alive_progress import alive_bar
+from tqdm import tqdm
 
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
@@ -90,6 +90,11 @@ def build_data_page(incoming_dict):
     text += 'name=' + incoming_dict['name'] + '|\n'
     if incoming_dict['title'] and incoming_dict['title'] != incoming_dict['name']:
         text += 'title=' + incoming_dict['title'] + '|\n'
+    try:
+        if incoming_dict['village']:
+            text += 'title=|\n'
+    except KeyError:
+        pass
     if incoming_dict['lat']:
         text += 'lat=' + str(incoming_dict['lat']) + '|\n'
     if incoming_dict['lon']:
@@ -127,9 +132,8 @@ def build_list_page(*args):
     return text
 
 df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin.xlsx', dtype=str)
-with alive_bar(len(df)) as bar:
+for a in tqdm(range(len(df))):
     for index, row in df.iterrows():
-        bar()
         data = row.to_list()
         # ['110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡']
         print(data)
@@ -167,6 +171,8 @@ with alive_bar(len(df)) as bar:
             dict_to_data['lon'] = wd_dict['lon']
         if wd_dict['name']:
             dict_to_data['wd_name'] = wd_dict['name']
+        if village_code != '000':
+            dict_to_data['village'] = True
         data_page_text = build_data_page(dict_to_data)
         data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
                                    f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
@@ -177,7 +183,7 @@ with alive_bar(len(df)) as bar:
             current_name = name_pattern.search(current_data_page_text).group(1)
             if current_name != name:
                 print(f'Name mismatch: {current_name} vs {name}')
-                pywikibot.showDiff(current_data_page_text, data_page_text)
+                pywikibot.showDiff(data_page.text, data_page_text)
                 if input('Update data page? (1/2)') == '1':
                     data_page.text = data_page_text
                     data_page.save(summary='更新區劃數據')
@@ -206,3 +212,4 @@ with alive_bar(len(df)) as bar:
                 if input('Update list page? (1/2)') == '1':
                     list_page.text = list_page_text
                     list_page.save(summary='更新區劃下級列表')
+    a+=1
