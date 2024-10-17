@@ -228,7 +228,8 @@ try:
                     list_page.text = list_page_text
                     list_page.save(summary='更新區劃下級列表')
         processed_df = pd.concat([pd.DataFrame([row], columns=df.columns), processed_df], ignore_index=True)
-except KeyboardInterrupt:
+except Exception as e:
+    print(e)
     print('Interrupted by user')
     processed_df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin_done.xlsx', index=False)
     print('Data saved')
