@@ -134,9 +134,11 @@ def build_list_page(*args):
     return text
 
 df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin.xlsx', dtype=str)
-processed_df = pd.DataFrame(columns=df.columns)
+processed_df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin1.xlsx', dtype=str)
 try:
     for index, row in df.iterrows():
+        if not processed_df[processed_df.eq(row).all(axis=1)].empty:
+            continue
         data = row.to_list()
         # ['110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡']
         print(data)
