@@ -26,7 +26,7 @@ def get_data(code):
                           'format': 'json'
                       }).submit()
     try:
-        wikidata_id = wd_search['search'][0]['id']
+        wikidata_id = wd_search['query']['search'][0]['title']
         data_dict = {
             'id': wikidata_id,
             'name': '',
