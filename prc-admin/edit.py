@@ -213,14 +213,12 @@ try:
             if current_name != name:
                 print(f'Name mismatch: {current_name} on page vs {name} in table')
                 pywikibot.showDiff(data_page.text, data_page_text)
-                if input('Update data page? (1/2)') == '1':
-                    data_page.text = data_page_text
-                    data_page.save(summary='更新區劃數據')
-        if not data_page.exists():
-            pywikibot.showDiff('', data_page_text)
-            if input('Create data page? (1/2)') == '1':
                 data_page.text = data_page_text
                 data_page.save(summary='更新區劃數據')
+        if not data_page.exists():
+            pywikibot.showDiff('', data_page_text)
+            data_page.text = data_page_text
+            data_page.save(summary='更新區劃數據')
 
         if village_code == '000':
             list_page_text = ''
@@ -238,9 +236,8 @@ try:
 
             if list_page_text != list_page.text:
                 pywikibot.showDiff(list_page.text, list_page_text)
-                if input('Update list page? (1/2)') == '1':
-                    list_page.text = list_page_text
-                    list_page.save(summary='更新區劃下級列表')
+                list_page.text = list_page_text
+                list_page.save(summary='更新區劃下級列表')
         processed_df = pd.concat([pd.DataFrame([row], columns=df.columns), processed_df], ignore_index=True)
 except KeyboardInterrupt:
     print('Interrupted by user')
