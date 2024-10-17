@@ -4,10 +4,12 @@
 # Name: edit.py
 # Author: CHAU SHING SHING HAMISH
 import os
+import re
 
 import pywikibot
 from pywikibot.data.api import Request
 import pandas as pd
+from pywikibot.date import pattern
 from pywikibot.exceptions import NoSiteLinkError
 
 site = pywikibot.Site('zh', 'wikipedia')
@@ -167,9 +169,20 @@ for index, row in df.iterrows():
     data_page_text = build_data_page(dict_to_data)
     data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
                                f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
+
+    if data_page.exists():
+        current_data_page_text = data_page.text
+        name_pattern = re.compile(r'name=(.*?)\|')
+        current_name = name_pattern.search(current_data_page_text).group(1)
+        if current_name != name:
+            print(f'Name mismatch: {current_name} vs {name}')
+            if input('Update data page? (1/2)') == '1':
+                pywikibot.showDiff('', data_page_text)
+                data_page.text = data_page_text
+                data_page.save(summary='更新區劃數據')
     if not data_page.exists():
-        print(data_page_text)
         if input('Create data page? (1/2)') == '1':
+            pywikibot.showDiff('', data_page_text)
             data_page.text = data_page_text
             data_page.save(summary='更新區劃數據')
 
@@ -186,7 +199,8 @@ for index, row in df.iterrows():
 
         list_page = pywikibot.Page(site, 'Template:PRC admin/list/' +
                                      f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
-        pywikibot.showDiff(list_page.text, list_page_text)
-        if input('Update list page? (1/2)') == '1':
-                list_page.text = list_page_text
-                list_page.save(summary='更新區劃下級列表')
+
+        if list_page_text != list_page.text and input('Update list page? (1/2)') == '1':
+            pywikibot.showDiff(list_page.text, list_page_text)
+            list_page.text = list_page_text
+            list_page.save(summary='更新區劃下級列表')
