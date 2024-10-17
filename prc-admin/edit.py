@@ -15,18 +15,35 @@ from pywikibot.exceptions import NoSiteLinkError
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
 
-def get_data(code):
+def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
-    wd_search = Request(site=pywikibot.Site('wikidata', 'wikidata'),
+    wd_search_by_code = Request(site=pywikibot.Site('wikidata', 'wikidata'),
                       parameters={
                           'action': 'query',
                           'list': 'search',
                           'srsearch': code_search,
                           'format': 'json'
                       }).submit()
+    wd_search_by_title = Request(site=pywikibot.Site('wikidata', 'wikidata'),
+                        parameters={
+                            'action': 'wbsearchentities',
+                            'search': title,
+                            'language': 'zh',
+                            'format': 'json'
+                        }).submit()
     try:
-        wikidata_id = wd_search['query']['search'][0]['title']
+        by_code = wd_search_by_code['query']['search'][0]['title'] if wd_search_by_code['query']['search'] else ''
+        by_title = wd_search_by_title['search'][0]['id'] if wd_search_by_title['search'] else ''
+
+        if by_code and by_title:
+            wikidata_id = by_code if by_code != by_title else by_title
+        elif by_code:
+            wikidata_id = by_code
+        elif by_title:
+            wikidata_id = by_title
+        else:
+            wikidata_id = ''
         data_dict = {
             'id': wikidata_id,
             'name': '',
@@ -159,7 +176,7 @@ try:
         county = data[9]
         town = data[10]
         admin_type = determine_type(full_code)
-        wd_dict = get_data(full_code)
+        wd_dict = get_data(name, full_code)
         dict_to_data = {
             'name': name,
             'title': wd_dict['link'],
