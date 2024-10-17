@@ -10,7 +10,7 @@ import pywikibot
 from pywikibot.data.api import Request
 import pandas as pd
 from pywikibot.exceptions import NoSiteLinkError
-from progress.bar import Bar
+
 
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
@@ -132,82 +132,88 @@ def build_list_page(*args):
     return text
 
 df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin.xlsx', dtype=str)
-for index, row in df.iterrows():
-    data = row.to_list()
-    # ['110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡']
-    print(data)
-    full_code = data[0]
-    name = data[1]
-    province_code = data[2]
-    city_code = data[3]
-    county_code = data[4]
-    town_code = data[5]
-    village_code = data[6]
-    if village_code != '000':
-        if name.find('社区') != -1:
-            name = name[:name.find('社区')+2]
-        elif name.find('村') != -1:
-            name = name[:name.find('村')+1]
-    province = data[7]
-    city = data[8]
-    county = data[9]
-    town = data[10]
-    admin_type = determine_type(full_code)
-    wd_dict = get_data(name, full_code)
-    dict_to_data = {
-        'name': name,
-        'title': wd_dict['link'],
-        'id': '',
-        'lat': '',
-        'lon': '',
-        'wd_name': ''
-    }
-    if wd_dict['id']:
-        dict_to_data['id'] = wd_dict['id']
-    if wd_dict['lat']:
-        dict_to_data['lat'] = wd_dict['lat']
-    if wd_dict['lon']:
-        dict_to_data['lon'] = wd_dict['lon']
-    if wd_dict['name']:
-        dict_to_data['wd_name'] = wd_dict['name']
-    if village_code != '000':
-        dict_to_data['village'] = True
-    data_page_text = build_data_page(dict_to_data)
-    data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
-                               f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
+try:
+    for index, row in df.iterrows():
+        data = row.to_list()
+        # ['110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡']
+        print(data)
+        full_code = data[0]
+        name = data[1]
+        province_code = data[2]
+        city_code = data[3]
+        county_code = data[4]
+        town_code = data[5]
+        village_code = data[6]
+        if village_code != '000':
+            if name.find('社区') != -1:
+                name = name[:name.find('社区')+2]
+            elif name.find('村') != -1:
+                name = name[:name.find('村')+1]
+        province = data[7]
+        city = data[8]
+        county = data[9]
+        town = data[10]
+        admin_type = determine_type(full_code)
+        wd_dict = get_data(name, full_code)
+        dict_to_data = {
+            'name': name,
+            'title': wd_dict['link'],
+            'id': '',
+            'lat': '',
+            'lon': '',
+            'wd_name': ''
+        }
+        if wd_dict['id']:
+            dict_to_data['id'] = wd_dict['id']
+        if wd_dict['lat']:
+            dict_to_data['lat'] = wd_dict['lat']
+        if wd_dict['lon']:
+            dict_to_data['lon'] = wd_dict['lon']
+        if wd_dict['name']:
+            dict_to_data['wd_name'] = wd_dict['name']
+        if village_code != '000':
+            dict_to_data['village'] = True
+        data_page_text = build_data_page(dict_to_data)
+        data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
+                                   f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
 
-    if data_page.exists():
-        current_data_page_text = data_page.text
-        name_pattern = re.compile(r'name=(.*?)\|')
-        current_name = name_pattern.search(current_data_page_text).group(1)
-        if current_name != name:
-            print(f'Name mismatch: {current_name} vs {name}')
-            pywikibot.showDiff(data_page.text, data_page_text)
-            if input('Update data page? (1/2)') == '1':
+        if data_page.exists():
+            current_data_page_text = data_page.text
+            name_pattern = re.compile(r'name=(.*?)\|')
+            current_name = name_pattern.search(current_data_page_text).group(1)
+            if current_name != name:
+                print(f'Name mismatch: {current_name} vs {name}')
+                pywikibot.showDiff(data_page.text, data_page_text)
+                if input('Update data page? (1/2)') == '1':
+                    data_page.text = data_page_text
+                    data_page.save(summary='更新區劃數據')
+        if not data_page.exists():
+            pywikibot.showDiff('', data_page_text)
+            if input('Create data page? (1/2)') == '1':
                 data_page.text = data_page_text
                 data_page.save(summary='更新區劃數據')
-    if not data_page.exists():
-        if input('Create data page? (1/2)') == '1':
-            pywikibot.showDiff('', data_page_text)
-            data_page.text = data_page_text
-            data_page.save(summary='更新區劃數據')
 
-    if village_code == '000':
-        list_page_text = ''
-        if admin_type == 'province':
-            list_page_text = build_list_page(df, province_code)
-        elif admin_type == 'city':
-            list_page_text = build_list_page(df, province_code, city_code)
-        elif admin_type == 'county':
-            list_page_text = build_list_page(df, province_code, city_code, county_code)
-        elif admin_type == 'town':
-            list_page_text = build_list_page(df, province_code, city_code, county_code, town_code)
+        if village_code == '000':
+            list_page_text = ''
+            if admin_type == 'province':
+                list_page_text = build_list_page(df, province_code)
+            elif admin_type == 'city':
+                list_page_text = build_list_page(df, province_code, city_code)
+            elif admin_type == 'county':
+                list_page_text = build_list_page(df, province_code, city_code, county_code)
+            elif admin_type == 'town':
+                list_page_text = build_list_page(df, province_code, city_code, county_code, town_code)
 
-        list_page = pywikibot.Page(site, 'Template:PRC admin/list/' +
-                                     f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
+            list_page = pywikibot.Page(site, 'Template:PRC admin/list/' +
+                                         f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
 
-        if list_page_text != list_page.text:
-            pywikibot.showDiff(list_page.text, list_page_text)
-            if input('Update list page? (1/2)') == '1':
-                list_page.text = list_page_text
-                list_page.save(summary='更新區劃下級列表')
+            if list_page_text != list_page.text:
+                pywikibot.showDiff(list_page.text, list_page_text)
+                if input('Update list page? (1/2)') == '1':
+                    list_page.text = list_page_text
+                    list_page.save(summary='更新區劃下級列表')
+        df.drop(index, inplace=True)
+except KeyboardInterrupt:
+    print('Interrupted by user')
+    df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin1.xlsx', index=False)
+    print('Data saved')
