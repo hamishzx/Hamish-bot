@@ -171,19 +171,20 @@ for index, row in df.iterrows():
         data_page.text = data_page_text
         data_page.save(summary='建立區劃數據')
 
-    list_page_text = ''
-    if admin_type == 'province':
-        list_page_text = build_list_page(df, province_code)
-    elif admin_type == 'city':
-        list_page_text = build_list_page(df, province_code, city_code)
-    elif admin_type == 'county':
-        list_page_text = build_list_page(df, province_code, city_code, county_code)
-    elif admin_type == 'town':
-        list_page_text = build_list_page(df, province_code, city_code, county_code, town_code)
+    if village_code != '000':
+        list_page_text = ''
+        if admin_type == 'province':
+            list_page_text = build_list_page(df, province_code)
+        elif admin_type == 'city':
+            list_page_text = build_list_page(df, province_code, city_code)
+        elif admin_type == 'county':
+            list_page_text = build_list_page(df, province_code, city_code, county_code)
+        elif admin_type == 'town':
+            list_page_text = build_list_page(df, province_code, city_code, county_code, town_code)
 
-    list_page = pywikibot.Page(site, 'Template:PRC admin/list/' +
-                                 f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
-    if not list_page.exists():
-        print(list_page_text)
-        list_page.text = list_page_text
-        list_page.save(summary='建立區劃下級列表')
+        list_page = pywikibot.Page(site, 'Template:PRC admin/list/' +
+                                     f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
+        if not list_page.exists():
+            print(list_page_text)
+            list_page.text = list_page_text
+            list_page.save(summary='建立區劃下級列表')
