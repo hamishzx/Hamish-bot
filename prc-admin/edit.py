@@ -15,12 +15,14 @@ from pywikibot.exceptions import NoSiteLinkError
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
 
-def get_data(title, code):
+def get_data(code):
+    code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
+    code_search = ' '.join([part for part in code_parts if int(part) != 0])
     wd_search = Request(site=pywikibot.Site('wikidata', 'wikidata'),
                       parameters={
-                          'action': 'wbsearchentities',
-                          'search': title,
-                          'language': 'zh',
+                          'action': 'query',
+                          'list': 'search',
+                          'srsearch': code_search,
                           'format': 'json'
                       }).submit()
     try:
@@ -154,7 +156,7 @@ try:
         county = data[9]
         town = data[10]
         admin_type = determine_type(full_code)
-        wd_dict = get_data(name, full_code)
+        wd_dict = get_data(full_code)
         dict_to_data = {
             'name': name,
             'title': wd_dict['link'],
@@ -215,5 +217,5 @@ try:
         df.drop(index, inplace=True)
 except KeyboardInterrupt:
     print('Interrupted by user')
-    df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin1.xlsx', index=False)
+    df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin.xlsx', index=False)
     print('Data saved')
