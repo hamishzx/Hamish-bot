@@ -171,7 +171,7 @@ for index, row in df.iterrows():
         print(data_page_text)
         if input('Create data page? (1/2)') == '1':
             data_page.text = data_page_text
-            data_page.save(summary='建立區劃數據')
+            data_page.save(summary='更新區劃數據')
 
     if village_code == '000':
         list_page_text = ''
@@ -186,8 +186,7 @@ for index, row in df.iterrows():
 
         list_page = pywikibot.Page(site, 'Template:PRC admin/list/' +
                                      f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
-        if not list_page.exists():
-            print(list_page_text)
-            if input('Create list page? (1/2)') == '1':
+        pywikibot.showDiff(list_page.text, list_page_text)
+        if input('Update list page? (1/2)') == '1':
                 list_page.text = list_page_text
-                list_page.save(summary='建立區劃下級列表')
+                list_page.save(summary='更新區劃下級列表')
