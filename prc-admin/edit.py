@@ -7,9 +7,11 @@ import os
 import re
 
 import pywikibot
+from oauthlib.uri_validate import query
 from pywikibot.data.api import Request
 import pandas as pd
 from pywikibot.exceptions import NoSiteLinkError
+from SPARQLWrapper import SPARQLWrapper, JSON
 
 
 site = pywikibot.Site('zh', 'wikipedia')
@@ -18,13 +20,15 @@ site.login()
 def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
-    wd_search_by_code = Request(site=pywikibot.Site('wikidata', 'wikidata'),
-                      parameters={
-                          'action': 'query',
-                          'list': 'search',
-                          'srsearch': code_search,
-                          'format': 'json'
-                      }).submit()
+    wd_search_by_code = SPARQLWrapper("https://query.wikidata.org/sparql")
+    wd_search_by_code.setQuery(f"""
+        PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+        SELECT ?item ?itemLabel WHERE {{
+          ?item wdt:P442 "{code_search}" .
+        }}
+        """)
+    wd_search_by_code.setReturnFormat(JSON)
+    wd_search_by_code = wd_search_by_code.query().convert()
     wd_search_by_title = Request(site=pywikibot.Site('wikidata', 'wikidata'),
                         parameters={
                             'action': 'wbsearchentities',
@@ -33,7 +37,7 @@ def get_data(title, code):
                             'format': 'json'
                         }).submit()
     try:
-        by_code = wd_search_by_code['query']['search'][0]['title'] if wd_search_by_code['query']['search'] else ''
+        by_code = wd_search_by_code['results']['bindings'][0]['item']['value'][wd_search_by_code['results']['bindings'][0]['item']['value'].find('Q'):] if wd_search_by_code['results']['bindings'] else ''
         by_title = wd_search_by_title['search'][0]['id'] if wd_search_by_title['search'] else ''
 
         if by_code and by_title:
@@ -43,7 +47,13 @@ def get_data(title, code):
         elif by_title:
             wikidata_id = by_title
         else:
-            wikidata_id = ''
+            return {
+                'id': '',
+                'name': '',
+                'lat': '',
+                'lon': '',
+                'link': '',
+            }
         data_dict = {
             'id': wikidata_id,
             'name': '',
@@ -54,13 +64,16 @@ def get_data(title, code):
         item = pywikibot.ItemPage(pywikibot.Site('wikidata', 'wikidata'), wikidata_id)
         if (item.claims['P442'][0].getTarget().replace(' ', '') !=
                 code[:len(item.claims['P442'][0].getTarget().replace(' ', ''))]):
-            return {
-                'id': '',
-                'name': '',
-                'lat': '',
-                'lon': '',
-                'link': '',
-            }
+            print(f'Code mismatch: {item.claims["P442"][0].getTarget()} in {wikidata_id} vs {code_search} in table')
+            if input('Continue?') == '2':
+                return {
+                    'id': '',
+                    'name': '',
+                    'lat': '',
+                    'lon': '',
+                    'link': '',
+                }
+
         try:
             if item.claims['P1448']:
                 data_dict['name'] = item.claims['P1448'][0].getTarget().text
@@ -148,6 +161,7 @@ processed_df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/adm
 try:
     for index, row in df.iterrows():
         if not processed_df[processed_df.eq(row).all(axis=1)].empty:
+            print(row.to_list()[0] + ' Already processed')
             continue
         data = row.to_list()
         # ['110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡']
@@ -197,7 +211,7 @@ try:
             name_pattern = re.compile(r'name=(.*?)\|')
             current_name = name_pattern.search(current_data_page_text).group(1)
             if current_name != name:
-                print(f'Name mismatch: {current_name} vs {name}')
+                print(f'Name mismatch: {current_name} on page vs {name} in table')
                 pywikibot.showDiff(data_page.text, data_page_text)
                 if input('Update data page? (1/2)') == '1':
                     data_page.text = data_page_text
@@ -228,8 +242,11 @@ try:
                     list_page.text = list_page_text
                     list_page.save(summary='更新區劃下級列表')
         processed_df = pd.concat([pd.DataFrame([row], columns=df.columns), processed_df], ignore_index=True)
+except KeyboardInterrupt:
+    print('Interrupted by user')
+    processed_df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin_done.xlsx', index=False)
+    print('Data saved')
 except Exception as e:
     print(e)
-    print('Interrupted by user')
     processed_df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin_done.xlsx', index=False)
     print('Data saved')
