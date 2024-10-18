@@ -4,7 +4,6 @@
 # Name: edit.py
 # Author: CHAU SHING SHING HAMISH
 import re
-
 import pywikibot
 
 from pywikibot.data.api import Request
@@ -172,6 +171,19 @@ def build_list_page(*args):
     text += '|\narg={{{arg|}}}}}'
     return text
 
+def check_onsite_page(wd_id):
+    onsite_page_query = Request(site=site,
+            parameters={
+                'action': 'query',
+                'format': 'json',
+                'list': 'search',
+                'formatversion': '2',
+                'srsearch': wd_id,
+                'srnamespace': '10'
+            }).submit()
+    page = onsite_page_query['query']['search'][0]['title'] if onsite_page_query['query']['search'] else ''
+    return page
+
 
 try:
     query = "SELECT * FROM admin LIMIT 1;"
@@ -230,11 +242,28 @@ try:
                     print(f'Name mismatch: {current_name} on page vs {name} in table')
                     pywikibot.showDiff(data_page.text, data_page_text)
                     data_page.text = data_page_text
-                    data_page.save(summary='更新區劃數據')
-            if not data_page.exists():
-                pywikibot.showDiff('', data_page_text)
-                data_page.text = data_page_text
-                data_page.save(summary='更新區劃數據')
+                    data_page.save(summary='更新' + name + '行政區劃數據')
+            else:
+                if wd_dict['id']:
+                    current_data_page_title = check_onsite_page(wd_dict['id']) if check_onsite_page(wd_dict['id']) else ''
+                    if current_data_page_title:
+                        current_data_page = pywikibot.Page(site, current_data_page_title)
+                        current_data_page.move(data_page.title(), reason=name + '行政區劃代碼變更', movetalk=True,
+                                               noredirect=False)
+                        print(f'Moved {current_data_page_title} to {data_page.title()}')
+                        # move related list page for incoming handle
+                        if village_code == '000':
+                            current_list_page = pywikibot.Page(site, current_data_page_title.replace('data', 'list'))
+                            current_list_page.move(data_page.title().replace('data', 'list'), reason=name + '行政區劃代碼變更', movetalk=True, noredirect=False)
+                            print(f'Moved {current_list_page.title()} to {data_page.title().replace("data", "list")}')
+                        if data_page.text != data_page_text:
+                            pywikibot.showDiff(data_page.text, data_page_text)
+                            data_page.text = data_page_text
+                            data_page.save(summary='更新' + name + '行政區劃數據')
+                else:
+                    pywikibot.showDiff('', data_page_text)
+                    data_page.text = data_page_text
+                    data_page.save(summary='建立' + name + '行政區劃數據')
 
         # list page
         admin_type = determine_type(full_code)
@@ -255,7 +284,7 @@ try:
             if list_page_text != list_page.text:
                 pywikibot.showDiff(list_page.text, list_page_text)
                 list_page.text = list_page_text
-                list_page.save(summary='更新區劃下級列表')
+                list_page.save(summary='更新' + name + '行政區劃下級列表')
         query = f"DELETE FROM admin WHERE full_code = '{full_code}';"
         cursor.execute(query)
         conn.commit()
