@@ -20,7 +20,7 @@ site.login()
 def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
-    wd_search_by_code = SPARQLWrapper("https://query.wikidata.org/sparql")
+    wd_search_by_code = SPARQLWrapper(" https://query.wikidata.org/bigdata/namespace/wdq/sparql")
     wd_search_by_code.setQuery(f"""
         PREFIX wdt: <http://www.wikidata.org/prop/direct/>
         SELECT ?item ?itemLabel WHERE {{
@@ -36,6 +36,7 @@ def get_data(title, code):
                             'language': 'zh',
                             'format': 'json'
                         }).submit()
+    print(wd_search_by_code)
     try:
         by_code = wd_search_by_code['results']['bindings'][0]['item']['value'][wd_search_by_code['results']['bindings'][0]['item']['value'].find('Q'):] if wd_search_by_code['results']['bindings'] else ''
         by_title = wd_search_by_title['search'][0]['id'] if wd_search_by_title['search'] else ''
