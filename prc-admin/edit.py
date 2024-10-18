@@ -19,7 +19,6 @@ def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
     code_query = f"SELECT * FROM query WHERE China_administrative_division_code = '{code_search}';"
-    print("code_query\n" + code_query)
     cursor.execute(code_query)
     wd_search_by_code = cursor.fetchall()
     wd_search_by_title = Request(site=pywikibot.Site('wikidata', 'wikidata'),
@@ -130,7 +129,6 @@ def build_list_page(*args):
         SELECT * FROM admin
         WHERE province_code = '{args[0]}' AND city_code != '00' AND district_code = '00' AND county_code = '000' AND town_code = '000';
         """
-        print('build_list_page\n' + query)
         cursor.execute(query)
         filtered = cursor.fetchall()
         for row in filtered:
@@ -140,7 +138,6 @@ def build_list_page(*args):
         SELECT * FROM admin
         WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code != '00' AND county_code = '000' AND town_code = '000';
         """
-        print('build_list_page\n' + query)
         cursor.execute(query)
         filtered = cursor.fetchall()
         for row in filtered:
@@ -150,7 +147,6 @@ def build_list_page(*args):
         SELECT * FROM admin
         WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code = '{args[2]}' AND county_code != '000' AND town_code = '000';
         """
-        print('build_list_page\n' + query)
         cursor.execute(query)
         filtered = cursor.fetchall()
         for row in filtered:
@@ -160,7 +156,6 @@ def build_list_page(*args):
         SELECT * FROM admin
         WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code = '{args[2]}' AND county_code = '{args[3]}' AND town_code != '000';
         """
-        print('build_list_page\n' + query)
         cursor.execute(query)
         filtered = cursor.fetchall()
         for row in filtered:
@@ -171,7 +166,6 @@ def build_list_page(*args):
 
 try:
     query = "SELECT * FROM admin LIMIT 1;"
-    print('init query\n' + query)
     cursor.execute(query)
     data = cursor.fetchall()[0]
     while data:
@@ -254,11 +248,9 @@ try:
                 list_page.text = list_page_text
                 list_page.save(summary='更新區劃下級列表')
         query = f"DELETE FROM admin WHERE full_code = '{full_code}';"
-        print('delete query\n' + query)
         cursor.execute(query)
         conn.commit()
         query = "SELECT * FROM admin LIMIT 1;"
-        print('init query\n' + query)
         cursor.execute(query)
         data = cursor.fetchall()[0]
 
