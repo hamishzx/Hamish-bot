@@ -6,7 +6,6 @@
 import re
 
 import pywikibot
-from oauthlib.uri_validate import query
 
 from pywikibot.data.api import Request
 from pywikibot.exceptions import NoSiteLinkError
@@ -19,9 +18,10 @@ cursor = conn.cursor()
 def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
-    code_query = f"SELECT * FROM query WHERE China_administrative_division_code = '{code_search}'"
+    code_query = f"SELECT * FROM query WHERE China_administrative_division_code = '{code_search}';"
+    print("code_query\n" + code_query)
     cursor.execute(code_query)
-    wd_search_by_code = cursor.fetchall()[0]
+    wd_search_by_code = cursor.fetchall()
     wd_search_by_title = Request(site=pywikibot.Site('wikidata', 'wikidata'),
                         parameters={
                             'action': 'wbsearchentities',
@@ -30,9 +30,8 @@ def get_data(title, code):
                             'format': 'json'
                         }).submit()
     try:
-        by_code = wd_search_by_code[0][wd_search_by_code[0].find('Q'):] if wd_search_by_code else ''
+        by_code = wd_search_by_code[0][0][wd_search_by_code[0][0].find('Q'):] if wd_search_by_code else ''
         by_title = wd_search_by_title['search'][0]['id'] if wd_search_by_title['search'] else ''
-
         if by_code and by_title:
             wikidata_id = by_code if by_code != by_title else by_title
         elif by_code:
@@ -131,6 +130,7 @@ def build_list_page(*args):
         SELECT * FROM admin
         WHERE province_code = '{args[0]}' AND city_code != '00' AND district_code = '00' AND county_code = '000' AND town_code = '000';
         """
+        print('build_list_page\n' + query)
         cursor.execute(query)
         filtered = cursor.fetchall()
         for row in filtered:
@@ -140,6 +140,7 @@ def build_list_page(*args):
         SELECT * FROM admin
         WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code != '00' AND county_code = '000' AND town_code = '000';
         """
+        print('build_list_page\n' + query)
         cursor.execute(query)
         filtered = cursor.fetchall()
         for row in filtered:
@@ -149,6 +150,7 @@ def build_list_page(*args):
         SELECT * FROM admin
         WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code = '{args[2]}' AND county_code != '000' AND town_code = '000';
         """
+        print('build_list_page\n' + query)
         cursor.execute(query)
         filtered = cursor.fetchall()
         for row in filtered:
@@ -158,6 +160,7 @@ def build_list_page(*args):
         SELECT * FROM admin
         WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code = '{args[2]}' AND county_code = '{args[3]}' AND town_code != '000';
         """
+        print('build_list_page\n' + query)
         cursor.execute(query)
         filtered = cursor.fetchall()
         for row in filtered:
@@ -167,7 +170,9 @@ def build_list_page(*args):
 
 
 try:
-    cursor.execute("SELECT * FROM admin LIMIT 1")
+    query = "SELECT * FROM admin LIMIT 1;"
+    print('init query\n' + query)
+    cursor.execute(query)
     data = cursor.fetchall()[0]
     while data:
         # ('110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡')
@@ -188,44 +193,47 @@ try:
         city = data[8]
         county = data[9]
         town = data[10]
-        admin_type = determine_type(full_code)
-        wd_dict = get_data(name, full_code)
-        dict_to_data = {
-            'name': name,
-            'title': wd_dict['link'],
-            'id': '',
-            'lat': '',
-            'lon': '',
-            'wd_name': ''
-        }
-        if wd_dict['id']:
-            dict_to_data['id'] = wd_dict['id']
-        if wd_dict['lat']:
-            dict_to_data['lat'] = wd_dict['lat']
-        if wd_dict['lon']:
-            dict_to_data['lon'] = wd_dict['lon']
-        if wd_dict['name']:
-            dict_to_data['wd_name'] = wd_dict['name']
-        if village_code != '000':
-            dict_to_data['village'] = True
-        data_page_text = build_data_page(dict_to_data)
-        data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
-                                   f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
 
-        if data_page.exists():
-            current_data_page_text = data_page.text
-            name_pattern = re.compile(r'name=(.*?)\|')
-            current_name = name_pattern.search(current_data_page_text).group(1)
-            if current_name != name:
-                print(f'Name mismatch: {current_name} on page vs {name} in table')
-                pywikibot.showDiff(data_page.text, data_page_text)
+        # data page
+        if name != '市辖区':
+            wd_dict = get_data(name, full_code)
+            dict_to_data = {
+                'name': name,
+                'title': wd_dict['link'],
+                'id': '',
+                'lat': '',
+                'lon': '',
+                'wd_name': ''
+            }
+            if wd_dict['id']:
+                dict_to_data['id'] = wd_dict['id']
+            if wd_dict['lat']:
+                dict_to_data['lat'] = wd_dict['lat']
+            if wd_dict['lon']:
+                dict_to_data['lon'] = wd_dict['lon']
+            if wd_dict['name']:
+                dict_to_data['wd_name'] = wd_dict['name']
+            if village_code != '000':
+                dict_to_data['village'] = True
+            data_page_text = build_data_page(dict_to_data)
+            data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
+                                       f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
+            if data_page.exists():
+                current_data_page_text = data_page.text
+                name_pattern = re.compile(r'name=(.*?)\|')
+                current_name = name_pattern.search(current_data_page_text).group(1)
+                if current_name != name:
+                    print(f'Name mismatch: {current_name} on page vs {name} in table')
+                    pywikibot.showDiff(data_page.text, data_page_text)
+                    data_page.text = data_page_text
+                    data_page.save(summary='更新區劃數據')
+            if not data_page.exists():
+                pywikibot.showDiff('', data_page_text)
                 data_page.text = data_page_text
                 data_page.save(summary='更新區劃數據')
-        if not data_page.exists():
-            pywikibot.showDiff('', data_page_text)
-            data_page.text = data_page_text
-            data_page.save(summary='更新區劃數據')
 
+        # list page
+        admin_type = determine_type(full_code)
         if village_code == '000':
             list_page_text = ''
             if admin_type == 'province':
@@ -244,16 +252,16 @@ try:
                 pywikibot.showDiff(list_page.text, list_page_text)
                 list_page.text = list_page_text
                 list_page.save(summary='更新區劃下級列表')
-        cursor.execute(f"DELETE FROM admin WHERE full_code = '{full_code}'")
-        cursor.commit()
-        cursor.execute("SELECT * FROM admin LIMIT 1")
+        query = f"DELETE FROM admin WHERE full_code = '{full_code}';"
+        print('delete query\n' + query)
+        cursor.execute(query)
+        conn.commit()
+        query = "SELECT * FROM admin LIMIT 1;"
+        print('init query\n' + query)
+        cursor.execute(query)
         data = cursor.fetchall()[0]
 
 except KeyboardInterrupt:
     print('Interrupted by user')
-    cursor.close()
-    conn.close()
-except Exception as e:
-    print(e)
     cursor.close()
     conn.close()
