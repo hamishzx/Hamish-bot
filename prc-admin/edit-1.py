@@ -12,6 +12,7 @@ from pywikibot.data.api import Request
 from pywikibot.exceptions import NoSiteLinkError
 import toolforge
 
+
 def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
@@ -55,6 +56,8 @@ def get_data(title, code):
             print(f'Code mismatch: {item.claims["P442"][0].getTarget()} in {wikidata_id} vs {code_search} in table')
             if item.claims['P442'][0].getTarget()[:5] == code_search[:5]:
                 if item.claims['P442'][0].getTarget()[:12] == code_search[:12]:
+                    pass
+                elif get_whitelist(item.claims['P442'][0].getTarget(), code_search):
                     pass
                 elif input('Continue?') == '2':
                     return {
@@ -186,6 +189,40 @@ def check_onsite_page(srsearch):
     page = onsite_page_query['query']['search'][0]['title'] if onsite_page_query['query']['search'] else ''
     return page
 
+def get_whitelist(before, after):
+    before_parts = before.split()
+    after_parts = after.split()
+
+    for i in range(min(len(before_parts), len(after_parts))):
+        if before_parts[i] != after_parts[i]:
+            differing_index = i
+            break
+
+    from_segment = ' '.join(before_parts[:differing_index + 1])
+    to_segment = ' '.join(after_parts[:differing_index + 1])
+
+    whitelist_query = f"SELECT * FROM prc_admin_whitelist WHERE from_segment = '{from_segment}' AND to_segment = '{to_segment}';"
+    cursor.execute(whitelist_query)
+    whitelist = cursor.fetchall()
+    if whitelist:
+        print(f'Whitelist entry found: {from_segment} -> {to_segment}')
+        return True
+
+    from_code = from_segment.replace(' ', '').ljust(12, '0')
+    to_code = to_segment.replace(' ', '').ljust(12, '0')
+    from_parts = [from_code[:2], from_code[2:4], from_code[4:6], from_code[6:9], from_code[9:]]
+    to_parts = [to_code[:2], to_code[2:4], to_code[4:6], to_code[6:9], to_code[9:]]
+    from_page = pywikibot.Page(site, 'Template:PRC admin/data/' + '/'.join(from_parts))
+    to_page = pywikibot.Page(site, 'Template:PRC admin/data/' + '/'.join(to_parts))
+    if from_page.getRedirectTarget() == to_page:
+        add_whitelist_query = f"INSERT INTO prc_admin_whitelist (from_segment, to_segment) VALUES ('{from_segment}', '{to_segment}');"
+        cursor.execute(add_whitelist_query)
+        conn.commit()
+        print(f'Added whitelist entry: {from_segment} -> {to_segment}')
+        return True
+    return False
+
+
 if len(sys.argv) != 2:
     print("Usage: python file.py <number>")
     sys.exit(1)
@@ -196,15 +233,10 @@ conn = toolforge.toolsdb('s53993__prc_admin_db')
 cursor = conn.cursor()
 
 try:
-    i = int(sys.argv[1])
-    i_end = i+100000
-    while i<i_end:
-        query = f"SELECT * FROM admin WHERE id = {i}"
-        cursor.execute(query)
-        if cursor.rowcount == 0:
-            i+=1
-            continue
-        data = cursor.fetchall()[0]
+    query = f"SELECT * FROM admin WHERE full_code LIKE '{sys.argv[1]}%' LIMIT 1;"
+    cursor.execute(query)
+    data = cursor.fetchall()[0]
+    while data:
         # ('110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡')
         print(data)
         full_code = data[0]
@@ -214,13 +246,21 @@ try:
         county_code = full_code[4:6]
         town_code = full_code[6:9]
         village_code = full_code[9:]
-        if village_code != '000':
+        admin_type = determine_type(full_code)
+        if admin_type == 'village':
             if name.find('社区') != -1:
-                name = name[:name.find('社区') + 2]
+                name = name[:name.find('社区')+2]
             elif name.find('村') != -1:
-                name = name[:name.find('村') + 1]
-            name = re.sub(r'居委会|居民委员会', '社区', name)  # custom replace
-
+                name = name[:name.find('村')+1]
+            name = re.sub(r'居委会|居民委员会', '社区', name) # custom replace
+            if name.find('办事处') != -1 and name.find('办事处') != 0:
+                name = name[:name.find('办事处')+3]
+            if name.find('街道') != -1 and name.find('街道') != 0:
+                name = name[:name.find('街道')+2]
+        elif admin_type == 'town':
+            if name.find('县') != -1:
+                name = name[name.find('县')+1:]
+            name = re.sub(r'办事处(街道)?', '街道', name)
         # data page
         if name != '市辖区':
             wd_dict = get_data(name, full_code)
@@ -274,18 +314,13 @@ try:
                             pywikibot.showDiff(data_page.text, data_page_text)
                             data_page.text = data_page_text
                             data_page.save(summary='更新行政區劃數據：' + name)
-                    else:
-                        pywikibot.showDiff('', data_page_text)
-                        data_page.text = data_page_text
-                        data_page.save(summary='建立行政區劃數據：' + name)
                 else:
                     pywikibot.showDiff('', data_page_text)
                     data_page.text = data_page_text
                     data_page.save(summary='建立行政區劃數據：' + name)
 
         # list page
-        admin_type = determine_type(full_code)
-        if village_code == '000':
+        if admin_type != 'village':
             list_page_text = ''
             if admin_type == 'province':
                 list_page_text = build_list_page(province_code)
@@ -303,10 +338,12 @@ try:
                 pywikibot.showDiff(list_page.text, list_page_text)
                 list_page.text = list_page_text
                 list_page.save(summary='更新行政區劃下級列表：' + name)
-        query = f"DELETE FROM admin WHERE full_code = '{full_code}';"
-        cursor.execute(query)
+        delete_query = f"DELETE FROM admin WHERE full_code = '{full_code}';"
+        cursor.execute(delete_query)
         conn.commit()
-        i+=1
+
+        cursor.execute(query)
+        data = cursor.fetchall()[0]
 
 except KeyboardInterrupt:
     print('Interrupted by user')
