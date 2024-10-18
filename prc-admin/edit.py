@@ -7,7 +7,7 @@ import os
 import re
 
 import pywikibot
-from oauthlib.uri_validate import query
+
 from pywikibot.data.api import Request
 import pandas as pd
 from pywikibot.exceptions import NoSiteLinkError
