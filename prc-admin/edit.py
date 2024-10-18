@@ -173,14 +173,14 @@ def build_list_page(*args):
     text += '|\narg={{{arg|}}}}}'
     return text
 
-def check_onsite_page(wd_id):
+def check_onsite_page(srsearch):
     onsite_page_query = Request(site=site,
             parameters={
                 'action': 'query',
                 'format': 'json',
                 'list': 'search',
                 'formatversion': '2',
-                'srsearch': wd_id,
+                'srsearch': srsearch,
                 'srnamespace': '10'
             }).submit()
     page = onsite_page_query['query']['search'][0]['title'] if onsite_page_query['query']['search'] else ''
@@ -215,6 +215,9 @@ try:
         # data page
         if name != '市辖区':
             wd_dict = get_data(name, full_code)
+            # 机场工作区 110105020400
+            if wd_dict['id'] == '' and name.find('社区') != -1:
+                wd_dict = get_data(name[:-2], full_code)
             dict_to_data = {
                 'name': name,
                 'title': wd_dict['link'],
