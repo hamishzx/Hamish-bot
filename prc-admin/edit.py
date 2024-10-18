@@ -189,6 +189,7 @@ try:
                 name = name[:name.find('社区')+2]
             elif name.find('村') != -1:
                 name = name[:name.find('村')+1]
+            name = re.sub(r'居委会|居民委员会', '社区', name) # custom replace
         province = data[7]
         city = data[8]
         county = data[9]
