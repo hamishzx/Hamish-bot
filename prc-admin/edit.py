@@ -163,10 +163,11 @@ def build_list_page(*args):
     text += '|\narg={{{arg|}}}}}'
     return text
 
-cursor.execute("SELECT * FROM admin")
-admin_data = cursor.fetchall()
+
 try:
-    for data in admin_data:
+    cursor.execute("SELECT * FROM admin LIMIT 1")
+    data = cursor.fetchall()[0]
+    while data:
         # ('110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡')
         print(data)
         full_code = data[0]
@@ -241,8 +242,16 @@ try:
                 pywikibot.showDiff(list_page.text, list_page_text)
                 list_page.text = list_page_text
                 list_page.save(summary='更新區劃下級列表')
+        cursor.execute(f"DELETE FROM admin WHERE full_code = {full_code}")
+        cursor.commit()
+        cursor.execute("SELECT * FROM admin LIMIT 1")
+        data = cursor.fetchall()[0]
 
 except KeyboardInterrupt:
     print('Interrupted by user')
+    cursor.close()
+    conn.close()
 except Exception as e:
     print(e)
+    cursor.close()
+    conn.close()
