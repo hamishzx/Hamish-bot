@@ -3,27 +3,23 @@
 # Time: 10 Aug 2024 22:53
 # Name: edit.py
 # Author: CHAU SHING SHING HAMISH
-import json
-import os
 import re
 
 import pywikibot
 
 from pywikibot.data.api import Request
-import pandas as pd
 from pywikibot.exceptions import NoSiteLinkError
-from SPARQLWrapper import SPARQLWrapper, JSON
-
+import toolforge
 
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
-
+conn = toolforge.toolsdb('s53993__prc_admin_db')
+cursor = conn.cursor()
 def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
-    with open(os.path.dirname(os.path.realpath(__file__)) + '/query.json', 'r', encoding='utf-8') as json_file:
-        query_code_data = json.load(json_file)
-    wd_search_by_code = [x for x in query_code_data if x["China_administrative_division_code"] == code_search]
+    cursor.execute(f"SELECT * FROM query WHERE China_administrative_division_code = {code_search}")
+    wd_search_by_code = cursor.fetchall()[0]
     wd_search_by_title = Request(site=pywikibot.Site('wikidata', 'wikidata'),
                         parameters={
                             'action': 'wbsearchentities',
@@ -32,7 +28,7 @@ def get_data(title, code):
                             'format': 'json'
                         }).submit()
     try:
-        by_code = wd_search_by_code[0]['item'][wd_search_by_code[0]['item'].find('Q'):] if wd_search_by_code else ''
+        by_code = wd_search_by_code[0][wd_search_by_code[0].find('Q'):] if wd_search_by_code else ''
         by_title = wd_search_by_title['search'][0]['id'] if wd_search_by_title['search'] else ''
 
         if by_code and by_title:
@@ -128,38 +124,50 @@ def build_data_page(incoming_dict):
 
 def build_list_page(*args):
     text = '{{ {{{1|PRC admin/showlist}}}\n'
-    if len(args) == 2:
-        filtered = df.query('province_code == @args[1] and city_code != "00" and district_code == "00" and county_code == "000" and town_code == "000"')
-        for index, row in filtered.iterrows():
-            data = row.to_list()
-            text += '|' + data[3]
+    if len(args) == 1:
+        query = f"""
+        SELECT * FROM admin
+        WHERE province_code = '{args[0]}' AND city_code != '00' AND district_code = '00' AND county_code = '000' AND town_code = '000';
+        """
+        cursor.execute(query)
+        filtered = cursor.fetchall()
+        for row in filtered:
+            text += '|' + row[3]
+    elif len(args) == 2:
+        query = f"""
+        SELECT * FROM admin
+        WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code != '00' AND county_code = '000' AND town_code = '000';
+        """
+        cursor.execute(query)
+        filtered = cursor.fetchall()
+        for row in filtered:
+            text += '|' + row[4]
     elif len(args) == 3:
-        filtered = df.query('province_code == @args[1] and city_code == @args[2] and district_code != "00" and county_code == "000" and town_code == "000"')
-        for index, row in filtered.iterrows():
-            data = row.to_list()
-            text += '|' + data[4]
+        query = f"""
+        SELECT * FROM admin
+        WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code = '{args[2]}' AND county_code != '000' AND town_code = '000';
+        """
+        cursor.execute(query)
+        filtered = cursor.fetchall()
+        for row in filtered:
+            text += '|' + row[5]
     elif len(args) == 4:
-        filtered = df.query('province_code == @args[1] and city_code == @args[2] and district_code == @args[3] and county_code != "000" and town_code == "000"')
-        for index, row in filtered.iterrows():
-            data = row.to_list()
-            text += '|' + data[5]
-    elif len(args) == 5:
-        filtered = df.query('province_code == @args[1] and city_code == @args[2] and district_code == @args[3] and county_code == @args[4] and town_code != "000"')
-        for index, row in filtered.iterrows():
-            data = row.to_list()
-            text += '|' + data[6]
+        query = f"""
+        SELECT * FROM admin
+        WHERE province_code = '{args[0]}' AND city_code = '{args[1]}' AND district_code = '{args[2]}' AND county_code = '{args[3]}' AND town_code != '000';
+        """
+        cursor.execute(query)
+        filtered = cursor.fetchall()
+        for row in filtered:
+            text += '|' + row[6]
     text += '|\narg={{{arg|}}}}}'
     return text
 
-df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin.xlsx', dtype=str)
-processed_df = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin_done.xlsx', dtype=str)
+cursor.execute("SELECT * FROM admin")
+admin_data = cursor.fetchall()
 try:
-    for index, row in df.iterrows():
-        if not processed_df[processed_df.eq(row).all(axis=1)].empty:
-            print(row.to_list()[0] + ' Already processed')
-            continue
-        data = row.to_list()
-        # ['110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡']
+    for data in admin_data:
+        # ('110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡')
         print(data)
         full_code = data[0]
         name = data[1]
@@ -218,13 +226,13 @@ try:
         if village_code == '000':
             list_page_text = ''
             if admin_type == 'province':
-                list_page_text = build_list_page(df, province_code)
+                list_page_text = build_list_page(province_code)
             elif admin_type == 'city':
-                list_page_text = build_list_page(df, province_code, city_code)
+                list_page_text = build_list_page(province_code, city_code)
             elif admin_type == 'county':
-                list_page_text = build_list_page(df, province_code, city_code, county_code)
+                list_page_text = build_list_page(province_code, city_code, county_code)
             elif admin_type == 'town':
-                list_page_text = build_list_page(df, province_code, city_code, county_code, town_code)
+                list_page_text = build_list_page(province_code, city_code, county_code, town_code)
 
             list_page = pywikibot.Page(site, 'Template:PRC admin/list/' +
                                          f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
@@ -233,12 +241,8 @@ try:
                 pywikibot.showDiff(list_page.text, list_page_text)
                 list_page.text = list_page_text
                 list_page.save(summary='更新區劃下級列表')
-        processed_df = pd.concat([pd.DataFrame([row], columns=df.columns), processed_df], ignore_index=True)
+
 except KeyboardInterrupt:
     print('Interrupted by user')
-    processed_df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin_done.xlsx', index=False)
-    print('Data saved')
 except Exception as e:
     print(e)
-    processed_df.to_excel(os.path.dirname(os.path.realpath(__file__)) + '/admin_done.xlsx', index=False)
-    print('Data saved')
