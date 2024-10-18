@@ -289,6 +289,7 @@ try:
             data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
                                        f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
             if data_page.exists():
+                print(f'Page {data_page.title()} exists')
                 current_data_page_text = data_page.text
                 name_pattern = re.compile(r'name=(.*?)\|')
                 current_name = name_pattern.search(current_data_page_text).group(1)
@@ -299,8 +300,10 @@ try:
                     data_page.save(summary='更新行政區劃數據：'+ name)
             else:
                 if wd_dict['id']:
+                    print('[DEBUG] 1')
                     current_data_page_title = check_onsite_page(wd_dict['id']) if check_onsite_page(wd_dict['id']) else ''
                     if current_data_page_title:
+                        print('[DEBUG] 2')
                         current_data_page = pywikibot.Page(site, current_data_page_title)
                         current_data_page.move(data_page.title(), reason='行政區劃代碼變更：' + name, movetalk=True,
                                                noredirect=False)
@@ -314,7 +317,13 @@ try:
                             pywikibot.showDiff(data_page.text, data_page_text)
                             data_page.text = data_page_text
                             data_page.save(summary='更新行政區劃數據：' + name)
+                    else:
+                        print('[DEBUG] 3')
+                        pywikibot.showDiff('', data_page_text)
+                        data_page.text = data_page_text
+                        data_page.save(summary='建立行政區劃數據：' + name)
                 else:
+                    print('[DEBUG] 4')
                     pywikibot.showDiff('', data_page_text)
                     data_page.text = data_page_text
                     data_page.save(summary='建立行政區劃數據：' + name)
