@@ -56,7 +56,16 @@ def get_data(title, code):
         if (item.claims['P442'][0].getTarget().replace(' ', '') !=
                 code[:len(item.claims['P442'][0].getTarget().replace(' ', ''))]):
             print(f'Code mismatch: {item.claims["P442"][0].getTarget()} in {wikidata_id} vs {code_search} in table')
-            if input('Continue?') == '2':
+            if item.claims['P442'][0].getTarget()[:5] == code_search[:5]:
+                if input('Continue?') == '2':
+                    return {
+                        'id': '',
+                        'name': '',
+                        'lat': '',
+                        'lon': '',
+                        'link': '',
+                    }
+            else:
                 return {
                     'id': '',
                     'name': '',
