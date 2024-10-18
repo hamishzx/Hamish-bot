@@ -108,6 +108,8 @@ def determine_type(code):
         return 'county'
     elif code[9:] == '000':
         return 'town'
+    else:
+        return 'village'
 
 def build_data_page(incoming_dict):
     text = '{{ {{{1|PRC admin/showdata}}}|\n'
