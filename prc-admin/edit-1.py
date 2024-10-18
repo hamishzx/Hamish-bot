@@ -4,16 +4,14 @@
 # Name: edit.py
 # Author: CHAU SHING SHING HAMISH
 import re
+import sys
+
 import pywikibot
 
 from pywikibot.data.api import Request
 from pywikibot.exceptions import NoSiteLinkError
 import toolforge
 
-site = pywikibot.Site('zh', 'wikipedia')
-site.login()
-conn = toolforge.toolsdb('s53993__prc_admin_db')
-cursor = conn.cursor()
 def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
@@ -188,12 +186,22 @@ def check_onsite_page(srsearch):
     page = onsite_page_query['query']['search'][0]['title'] if onsite_page_query['query']['search'] else ''
     return page
 
+if len(sys.argv) != 2:
+    print("Usage: python file.py <number>")
+    sys.exit(1)
+
+site = pywikibot.Site('zh', 'wikipedia')
+site.login()
+conn = toolforge.toolsdb('s53993__prc_admin_db')
+cursor = conn.cursor()
 
 try:
-    query = "SELECT * FROM admin LIMIT 1;"
-    cursor.execute(query)
-    data = cursor.fetchall()[0]
-    while data:
+    i = int(sys.argv[1])
+    i_end = i+100000
+    while i<i_end:
+        query = f"SELECT * FROM admin WHERE id = {i}"
+        cursor.execute(query)
+        data = cursor.fetchall()[0]
         # ('110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡')
         print(data)
         full_code = data[0]
@@ -205,10 +213,10 @@ try:
         village_code = full_code[9:]
         if village_code != '000':
             if name.find('社区') != -1:
-                name = name[:name.find('社区')+2]
+                name = name[:name.find('社区') + 2]
             elif name.find('村') != -1:
-                name = name[:name.find('村')+1]
-            name = re.sub(r'居委会|居民委员会', '社区', name) # custom replace
+                name = name[:name.find('村') + 1]
+            name = re.sub(r'居委会|居民委员会', '社区', name)  # custom replace
 
         # data page
         if name != '市辖区':
@@ -291,9 +299,7 @@ try:
         query = f"DELETE FROM admin WHERE full_code = '{full_code}';"
         cursor.execute(query)
         conn.commit()
-        query = "SELECT * FROM admin LIMIT 1;"
-        cursor.execute(query)
-        data = cursor.fetchall()[0]
+        i+=1
 
 except KeyboardInterrupt:
     print('Interrupted by user')
