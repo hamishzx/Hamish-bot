@@ -55,7 +55,7 @@ def get_data(title, code):
         }
         item = pywikibot.ItemPage(pywikibot.Site('wikidata', 'wikidata'), wikidata_id)
         if (item.claims['P442'][0].getTarget().replace(' ', '') !=
-                code[:len(item.claims['P442'][0].getTarget().replace(' ', ''))]):
+                code[:len(item.claims['P442'][0].getTarget().replace(' ', ''))] and by_code):
             print(f'Code mismatch: {item.claims["P442"][0].getTarget()} in {wikidata_id} vs {code_search} in table')
             if input('Continue?') == '2':
                 return {
