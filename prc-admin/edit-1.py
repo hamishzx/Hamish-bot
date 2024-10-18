@@ -274,6 +274,10 @@ try:
                             pywikibot.showDiff(data_page.text, data_page_text)
                             data_page.text = data_page_text
                             data_page.save(summary='更新行政區劃數據：' + name)
+                    else:
+                        pywikibot.showDiff('', data_page_text)
+                        data_page.text = data_page_text
+                        data_page.save(summary='建立行政區劃數據：' + name)
                 else:
                     pywikibot.showDiff('', data_page_text)
                     data_page.text = data_page_text
