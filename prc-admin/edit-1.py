@@ -201,6 +201,9 @@ try:
     while i<i_end:
         query = f"SELECT * FROM admin WHERE id = {i}"
         cursor.execute(query)
+        if cursor.rowcount == 0:
+            i+=1
+            continue
         data = cursor.fetchall()[0]
         # ('110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡')
         print(data)
