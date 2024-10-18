@@ -6,6 +6,7 @@
 import re
 
 import pywikibot
+from oauthlib.uri_validate import query
 
 from pywikibot.data.api import Request
 from pywikibot.exceptions import NoSiteLinkError
@@ -18,7 +19,8 @@ cursor = conn.cursor()
 def get_data(title, code):
     code_parts = [code[:2], code[2:4], code[4:6], code[6:9], code[9:]]
     code_search = ' '.join([part for part in code_parts if int(part) != 0])
-    cursor.execute(f"SELECT * FROM query WHERE China_administrative_division_code = {code_search}")
+    code_query = f"SELECT * FROM query WHERE China_administrative_division_code = '{code_search}'"
+    cursor.execute(code_query)
     wd_search_by_code = cursor.fetchall()[0]
     wd_search_by_title = Request(site=pywikibot.Site('wikidata', 'wikidata'),
                         parameters={
@@ -242,7 +244,7 @@ try:
                 pywikibot.showDiff(list_page.text, list_page_text)
                 list_page.text = list_page_text
                 list_page.save(summary='更新區劃下級列表')
-        cursor.execute(f"DELETE FROM admin WHERE full_code = {full_code}")
+        cursor.execute(f"DELETE FROM admin WHERE full_code = '{full_code}'")
         cursor.commit()
         cursor.execute("SELECT * FROM admin LIMIT 1")
         data = cursor.fetchall()[0]
