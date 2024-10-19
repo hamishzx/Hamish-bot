@@ -60,14 +60,15 @@ def get_data(title, code):
                     pass
                 elif get_whitelist(item.claims['P442'][0].getTarget(), code_search):
                     pass
-                elif input('Continue?') == '2':
-                    return {
-                        'id': '',
-                        'name': '',
-                        'lat': '',
-                        'lon': '',
-                        'link': '',
-                    }
+                else:
+                    if input('Continue?') == '2':
+                        return {
+                            'id': '',
+                            'name': '',
+                            'lat': '',
+                            'lon': '',
+                            'link': '',
+                        }
             else:
                 return {
                     'id': '',
@@ -215,7 +216,7 @@ def get_whitelist(before, after):
     to_parts = [to_code[:2], to_code[2:4], to_code[4:6], to_code[6:9], to_code[9:]]
     from_page = pywikibot.Page(site, 'Template:PRC admin/data/' + '/'.join(from_parts))
     to_page = pywikibot.Page(site, 'Template:PRC admin/data/' + '/'.join(to_parts))
-    if from_page.getRedirectTarget() == to_page:
+    if from_page.isRedirectPage() and from_page.getRedirectTarget() == to_page:
         add_whitelist_query = f"INSERT INTO prc_admin_whitelist (from_segment, to_segment) VALUES ('{from_segment}', '{to_segment}');"
         cursor.execute(add_whitelist_query)
         conn.commit()
@@ -224,7 +225,7 @@ def get_whitelist(before, after):
     return False
 
 
-if len(sys.argv) != 2:
+if len(sys.argv) != 3:
     print("Usage: python file.py <number>")
     sys.exit(1)
 
@@ -234,7 +235,16 @@ conn = toolforge.toolsdb('s53993__prc_admin_db')
 cursor = conn.cursor()
 
 try:
-    query = f"SELECT * FROM admin WHERE full_code LIKE '{sys.argv[1]}%' LIMIT 1;"
+    if sys.argv[2] == 'city':
+        query_regexp = f'^{sys.argv[1]}(?!00)[0-9]{2}00000000$'
+    elif sys.argv[2] == 'county':
+        query_regexp = f'^{sys.argv[1]}[0-9]{2}(?!00)[0-9]{2}000000$'
+    elif sys.argv[2] == 'town':
+        query_regexp = f'^{sys.argv[1]}[0-9]{4}(?!000)[0-9]{3}000$'
+    else:
+        print('Invalid type')
+        sys.exit(1)
+    query = f"SELECT * FROM admin WHERE full_code REGEXP {query_regexp} LIMIT 1;"
     cursor.execute(query)
     data = cursor.fetchall()[0]
     while data:
