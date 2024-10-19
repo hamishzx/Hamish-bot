@@ -257,7 +257,7 @@ try:
                 print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n')
                 print('Custom search matched:', name, end='\n')
                 print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n')
-            if name.find('社区居委会') != -1 or name.find('社区居民委员会') != -1:
+            if name.find('社区居委会') != -1 or name.find('社区居民委员会') != -1 or name.find('社区居民居委会') != -1:
                 name = name[:name.find('社区')+2]
             elif name.find('村') != -1:
                 name = name[:name.find('村')+1]
