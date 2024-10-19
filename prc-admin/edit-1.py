@@ -298,8 +298,13 @@ try:
             data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
                                        f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
             if data_page.exists():
+                # if new data page is redirect, it may be moved wrongly by myself
+                # if not, abort to protect data
                 if data_page.isRedirectPage():
-                    exit(f'{data_page.title()} is a redirect page, aborting operation')
+                    print(f'{data_page.title()} is a redirect page, trying to move back to fix')
+                    redirect_page = data_page.getRedirectTarget()
+                    redirect_page.move(data_page.title(), reason='行政區劃數據修復：' + name, movetalk=True, noredirect=True)
+                    print(f'[FIX] Moved {redirect_page.title()} to {data_page.title()}')
                 current_data_page_text = data_page.text
                 name_pattern = re.compile(r'name=(.*?)\|')
                 current_name = name_pattern.search(current_data_page_text).group(1)
