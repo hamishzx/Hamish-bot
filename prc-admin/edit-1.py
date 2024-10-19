@@ -7,6 +7,7 @@ import re
 import sys
 
 import pywikibot
+from mwparserfromhell.wikicode import FLAGS
 
 from pywikibot.data.api import Request
 from pywikibot.exceptions import NoSiteLinkError
@@ -237,10 +238,13 @@ try:
     cursor.execute(query)
     data = cursor.fetchall()[0]
     while data:
+        data_flag = False
+        list_flag = False
         # ('110119203214', '桃条沟村委会', '11', '01', '19', '203', '214', '北京市', '市辖区', '延庆区', '珍珠泉乡')
         print(data)
         full_code = data[0]
         name = data[1]
+        original_name = data[1]
         province_code = full_code[:2]
         city_code = full_code[2:4]
         county_code = full_code[4:6]
@@ -248,7 +252,12 @@ try:
         village_code = full_code[9:]
         admin_type = determine_type(full_code)
         if admin_type == 'village':
-            if name.find('社区') != -1:
+            if custom_search := re.search(r'(?:.*省)?(.*?)(社区|街道办事处)(第(一|二|三|四|五|六|七|八|九|十))居(民)?委(员)?会', name):
+                name = custom_search.group(1) + custom_search.group(3) + '社区'
+                print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n')
+                print('Custom search matched:', name, end='\n')
+                print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n')
+            if name.find('社区居委会') != -1 or name.find('社区居民委员会') != -1:
                 name = name[:name.find('社区')+2]
             elif name.find('村') != -1:
                 name = name[:name.find('村')+1]
@@ -297,6 +306,7 @@ try:
                     pywikibot.showDiff(data_page.text, data_page_text)
                     data_page.text = data_page_text
                     data_page.save(summary='更新行政區劃數據：'+ name)
+                    data_flag = True
             else:
                 if wd_dict['id']:
                     current_data_page_title = check_onsite_page(wd_dict['id']) if check_onsite_page(wd_dict['id']) else ''
@@ -314,14 +324,17 @@ try:
                             pywikibot.showDiff(data_page.text, data_page_text)
                             data_page.text = data_page_text
                             data_page.save(summary='更新行政區劃數據：' + name)
+                            data_flag = True
                     else:
                         pywikibot.showDiff('', data_page_text)
                         data_page.text = data_page_text
                         data_page.save(summary='建立行政區劃數據：' + name)
+                        data_flag = True
                 else:
                     pywikibot.showDiff('', data_page_text)
                     data_page.text = data_page_text
                     data_page.save(summary='建立行政區劃數據：' + name)
+                    data_flag = True
 
         # list page
         if admin_type != 'village':
@@ -342,6 +355,10 @@ try:
                 pywikibot.showDiff(list_page.text, list_page_text)
                 list_page.text = list_page_text
                 list_page.save(summary='更新行政區劃下級列表：' + name)
+                list_flag = True
+        record_query = f"INSERT INTO admin_done (full_code, name, format_name, data, list) VALUES ('{full_code}', '{original_name}', '{name}', {data_flag}, {list_flag});"
+        cursor.execute(record_query)
+        conn.commit()
         delete_query = f"DELETE FROM admin WHERE full_code = '{full_code}';"
         cursor.execute(delete_query)
         conn.commit()
