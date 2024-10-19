@@ -298,6 +298,8 @@ try:
             data_page = pywikibot.Page(site, 'Template:PRC admin/data/' +
                                        f"{data[0][:2]}/{data[0][2:4]}/{data[0][4:6]}/{data[0][6:9]}/{data[0][9:]}")
             if data_page.exists():
+                if data_page.isRedirectPage():
+                    exit(f'{data_page.title()} is a redirect page, aborting operation')
                 current_data_page_text = data_page.text
                 name_pattern = re.compile(r'name=(.*?)\|')
                 current_name = name_pattern.search(current_data_page_text).group(1)
@@ -305,7 +307,10 @@ try:
                     print(f'Name mismatch: {current_name} on page vs {name} in table')
                     pywikibot.showDiff(data_page.text, data_page_text)
                     data_page.text = data_page_text
-                    data_page.save(summary='更新行政區劃數據：'+ name)
+                    change_summary = '行政區劃更名：' + current_name + ' -> ' + name
+                    if name != original_name:
+                        change_summary += '（' + original_name + '）'
+                    data_page.save(summary=change_summary, minor=False)
                     data_flag = True
             else:
                 if wd_dict['id']:
@@ -323,17 +328,26 @@ try:
                         if data_page.text != data_page_text:
                             pywikibot.showDiff(data_page.text, data_page_text)
                             data_page.text = data_page_text
-                            data_page.save(summary='更新行政區劃數據：' + name)
+                            change_summary = '行政區劃數據更新：' + name
+                            if name != original_name:
+                                change_summary += '（' + original_name + '）'
+                            data_page.save(summary=change_summary, minor=False)
                             data_flag = True
                     else:
                         pywikibot.showDiff('', data_page_text)
                         data_page.text = data_page_text
-                        data_page.save(summary='建立行政區劃數據：' + name)
+                        change_summary = '建立行政區劃數據：' + name
+                        if name != original_name:
+                            change_summary += '（' + original_name + '）'
+                        data_page.save(summary=change_summary, minor=False)
                         data_flag = True
                 else:
                     pywikibot.showDiff('', data_page_text)
                     data_page.text = data_page_text
-                    data_page.save(summary='建立行政區劃數據：' + name)
+                    change_summary = '建立行政區劃數據：' + name
+                    if name != original_name:
+                        change_summary += '（' + original_name + '）'
+                    data_page.save(summary=change_summary, minor=False)
                     data_flag = True
 
         # list page
@@ -354,7 +368,7 @@ try:
             if list_page_text != list_page.text:
                 pywikibot.showDiff(list_page.text, list_page_text)
                 list_page.text = list_page_text
-                list_page.save(summary='更新行政區劃下級列表：' + name)
+                list_page.save(summary='行政區劃下級列表更新：' + original_name, minor=False)
                 list_flag = True
         record_query = f"INSERT INTO admin_done (full_code, name, format_name, data, list) VALUES ('{full_code}', '{original_name}', '{name}', {data_flag}, {list_flag});"
         cursor.execute(record_query)
