@@ -236,11 +236,11 @@ cursor = conn.cursor()
 
 try:
     if sys.argv[2] == 'city':
-        query_regexp = f'^{sys.argv[1]}(?!00)[0-9]{{2}}00000000$'
+        query_regexp = rf'^{sys.argv[1]}(?!00)[0-9]{{2}}00000000$'
     elif sys.argv[2] == 'county':
-        query_regexp = f'^{sys.argv[1]}[0-9]{{2}}(?!00)[0-9]{{2}}000000$'
+        query_regexp = rf'^{sys.argv[1]}[0-9]{{2}}(?!00)[0-9]{{2}}000000$'
     elif sys.argv[2] == 'town':
-        query_regexp = f'^{sys.argv[1]}[0-9]{{4}}(?!000)[0-9]{{3}}000$'
+        query_regexp = rf'^{sys.argv[1]}[0-9]{{4}}(?!000)[0-9]{{3}}000$'
     else:
         print('Invalid type')
         sys.exit(1)
