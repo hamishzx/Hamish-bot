@@ -30,7 +30,6 @@ while True:
             break
 
 
-raw_txt = './reports/report1.txt'
 page_text = '* 生成時間：~~~~~\n'
 
 bad_pattern = re.compile(r'\{\{(受限[制製]文件|[Bb]ad\s?image|[Rr]estricted use)\}\}')
@@ -47,7 +46,7 @@ def time_record(t):
     user_page.text = user_page_text
     user_page.save(summary = "Updating task report", minor = False)
 
-with open(raw_txt, 'r') as infile:
+with open(os.path.join(dir_path, '/reports/report1.txt'), 'r') as infile:
     for line in infile:
         line = line.strip()
         print(line, end='\t')
