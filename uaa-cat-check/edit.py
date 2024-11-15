@@ -30,6 +30,7 @@ for page in catpage.articles():
     else:
         title = page.title()
     session = requests.Session()
+    print(title[10:], end='\t')
     params = {
         "action": "query",
         "list": "blocks",
@@ -38,7 +39,10 @@ for page in catpage.articles():
     }
     blockinfo = session.get(url="https://zh.wikipedia.org/w/api.php", params=params).json()
     if not blockinfo['query']['blocks'] or blockinfo['query']['blocks'][0]['expiry'] != "infinity" or "partial" in blockinfo['query']['blocks'][0]:
+        print('not blocked')
+        print()
         continue
+    print('blocked')
     utpage = pywikibot.Page(site, page.title())
     template_text = "{{subst:uw-username|category=}}"
     text = utpage.text
@@ -48,6 +52,7 @@ for page in catpage.articles():
     utpage.text = text
     utpage.save(summary="[[Wikipedia:机器人/申请/Hamish-bot/4|T4]]：自動維護[[:Category:可能违反方针的用户名]]", minor=False)
     op = True
+    print()
 
 # Updating task table on user page
 
