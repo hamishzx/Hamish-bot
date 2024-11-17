@@ -7,11 +7,8 @@
 #:
 #: Adopted from: Fastily
 
-ZHWIKI="zhwiki"
-COMMONSWIKI="commonswiki"
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPORT_DIR="${SCRIPT_DIR}/reports"
+SCRIPT_DIR=$(dirname "$0")
+REPORT_DIR=${SCRIPT_DIR}/reports
 
 ##
 # Runs a MySQL query against the labs replica database and puts the result in ~/public_html/r.
@@ -21,9 +18,22 @@ REPORT_DIR="${SCRIPT_DIR}/reports"
 #	2) Path(s) to the sql file(s) to execute
 ##
 do_query() {
-    for s in ${@:2}; do
-        mysql --defaults-file=~/replica.my.cnf -q -r -B -N -h "${1}.analytics.db.svc.wikimedia.cloud" "${1}_p" < "${SCRIPT_DIR}/${s}.sql" > "${REPORT_DIR}/${s}.txt"
-    done
+        case ${1} in
+            commonswiki)
+                SQL_QUERY="SELECT page.page_title FROM page WHERE page.page_namespace=6;"
+                ;;
+            zhwiki)
+                SQL_QUERY="SELECT wpg.page_title FROM zhwiki_p.page wpg LEFT JOIN zhwiki_p.image wpimg ON wpimg.img_name = wpg.page_title WHERE wpg.page_namespace=6 AND wpimg.img_name IS null;"
+                ;;
+            *)
+                echo "Unknown query name: ${1}"
+                ;;
+        esac
+
+        # Run the query and save the result
+        echo "Executing query for ${1}..."
+        : > "${REPORT_DIR}/${1}.txt"
+        mysql --defaults-file=~/replica.my.cnf -q -r -B -N -h "${1}.analytics.db.svc.wikimedia.cloud" "${1}_p" -e "$SQL_QUERY" > "${REPORT_DIR}/${1}.txt"
     echo "Completed query execution for ${1}"
 }
 
@@ -38,14 +48,17 @@ do_query() {
 intersection() {
     echo "Line count in ${REPORT_DIR}/${1}.txt: $(wc -l < "${REPORT_DIR}/${1}.txt")"
     echo "Line count in ${REPORT_DIR}/${2}.txt: $(wc -l < "${REPORT_DIR}/${2}.txt")"
-    echo "Line count in ${REPORT_DIR}/${3}.txt: $(wc -l < "${REPORT_DIR}/${3}.txt")"
     awk 'NR==FNR { lines[$0]=1; next } $0 in lines' "${REPORT_DIR}/${1}.txt" "${REPORT_DIR}/${2}.txt" > "${REPORT_DIR}/${3}.txt"
+    echo "Line count in ${REPORT_DIR}/${3}.txt: $(wc -l < "${REPORT_DIR}/${3}.txt")"
 }
 
 case "$1" in
     report)
-        do_query $COMMONSWIKI commonswiki
-        do_query $ZHWIKI zhwiki
+        mkdir -p "$REPORT_DIR"
+        echo $SCRIPT_DIR
+        echo $REPORT_DIR
+        do_query commonswiki
+        do_query zhwiki
         intersection zhwiki commonswiki report1
         echo "Completed report generation"
         ;;
