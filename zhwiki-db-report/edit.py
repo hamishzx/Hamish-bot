@@ -63,7 +63,9 @@ with open(file_path, 'r') as infile:
 if not file_list:
     raise ValueError('No file found')
 else:
+    new_text = page_text + file_list
     report_page = pywikibot.Page(site, 'Wikipedia:資料庫報告/檔案描述頁')
-    report_page.text = page_text
+    pywikibot.showDiff(report_page.text, new_text)
+    report_page.text = new_text
     report_page.save('[[Wikipedia:机器人/申请/Hamish-bot/8|T8]]：生成本地存在檔案描述的維基共享資源文件列表')
     time_record(str((datetime.datetime.now() + datetime.timedelta(hours=8)).__format__('%d/%m/%y %H:%M')))
