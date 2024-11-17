@@ -11,10 +11,21 @@ import os
 import time
 import datetime
 
+
+def time_record(t):
+    user_page = pywikibot.Page(site, "User:Hamish-bot")
+    user_page_text = user_page.text
+    user_page_text = re.sub(r'<!-- T8rs -->(.*)<!-- T8re -->', '<!-- T8rs -->' + t + '<!-- T8re -->', user_page_text, flags=re.M)
+    user_page_text = re.sub(r'<!-- T8os -->(.*)<!-- T8oe -->', '<!-- T8os -->' + t + '<!-- T8oe -->', user_page_text, flags=re.M)
+    pywikibot.showDiff(user_page.text, user_page_text)
+    user_page.text = user_page_text
+    user_page.save(summary = "Updating task report", minor = False)
+
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+'''
 sh_script = os.path.join(dir_path, 'run.sh')
 process = subprocess.Popen(['bash', sh_script, 'report'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -28,22 +39,12 @@ while True:
             print("Report cooked")
             break
 
-
+'''
 page_text = '* 生成時間：~~~~~\n'
 
 bad_pattern = re.compile(r'\{\{(受限[制製]文件|[Bb]ad\s?image|[Rr]estricted use)\}\}')
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
-
-
-def time_record(t):
-    user_page = pywikibot.Page(site, "User:Hamish-bot")
-    user_page_text = user_page.text
-    user_page_text = re.sub(r'<!-- T8rs -->(.*)<!-- T8re -->', '<!-- T8rs -->' + t + '<!-- T8re -->', user_page_text, flags=re.M)
-    user_page_text = re.sub(r'<!-- T8os -->(.*)<!-- T8oe -->', '<!-- T8os -->' + t + '<!-- T8oe -->', user_page_text, flags=re.M)
-    pywikibot.showDiff(user_page.text, user_page_text)
-    user_page.text = user_page_text
-    user_page.save(summary = "Updating task report", minor = False)
 
 file_path = os.path.join(dir_path, 'reports/report1.txt')
 file_list = ''
