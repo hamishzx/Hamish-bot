@@ -53,8 +53,11 @@ with open(file_path, 'r') as infile:
     for line in infile:
         line = line.strip()
         print(line, end='\t')
+        file_page = pywikibot.Page(site, 'File:'+line)
+        if file_page.isRedirectPage():
+            continue
         file_list += f'# [[:File:{line}]]'
-        if bad_pattern.search(pywikibot.Page(site, 'File:'+line).text):
+        if bad_pattern.search(file_page.text):
             file_list += '（受限制文件）'
             print('R')
         file_list += '\n'
