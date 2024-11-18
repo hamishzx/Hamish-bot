@@ -51,6 +51,7 @@ if __name__ == '__main__':
         exit(0)
     for page in pages_to_remove:
         page = page.decode('utf-8')
+        print(page)
         page = pywikibot.Page(site, page)
         text = page.text
         # Category is added by software so use full prefix, but need check
