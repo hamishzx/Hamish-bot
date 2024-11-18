@@ -3,26 +3,17 @@ import json
 import hashlib
 import os
 import re
+import sys
 import time
 import hashlib
 import datetime
-
-os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 import pywikibot
 from config import config_page_name  # pylint: disable=E0611,W0614
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from botutils.record import time_record
 
-def timeRecord(op, t):
-    user_page = pywikibot.Page(site, "User:Hamish-bot")
-    user_page_text = user_page.text
-    user_page_text = re.sub(r'<!-- T3rs -->(.*)<!-- T3re -->', '<!-- T3rs -->' + t + '<!-- T3re -->', user_page_text, flags=re.M)
-    if op:
-        user_page_text = re.sub(r'<!-- T3os -->(.*)<!-- T3oe -->', '<!-- T3os -->' + t + '<!-- T3oe -->', user_page_text, flags=re.M)
-    pywikibot.showDiff(user_page.text, user_page_text)
-    user_page.text = user_page_text
-    user_page.save(summary = "Updating task report", minor = False)
-
-
+os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
 rec_time = (datetime.datetime.now() + datetime.timedelta(hours = 8)).__format__('%d/%m/%y %H:%M')
@@ -113,7 +104,7 @@ for section in text:
     print()
 
 if count == 0:
-    timeRecord(op, rec_time)
+    time_record(2, rec_time, op)
     print("nothing changed")
 else:
     pywikibot.showDiff(rsnpage.text, mainPageText)
@@ -137,4 +128,4 @@ else:
         print(summary)
         archivepage.save(summary=summary_prefix + summary, minor=False)
 
-    timeRecord(op, rec_time)
+    time_record(2, rec_time, op)

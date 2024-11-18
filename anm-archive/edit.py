@@ -5,24 +5,13 @@ import re
 import time
 import hashlib
 import datetime
-
-import mwparserfromhell
-os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
+import sys
 import pywikibot
 from config import config_page_name  # pylint: disable=E0611,W0614
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from botutils.record import time_record
 
-
-def timeRecord(op, t):
-    user_page = pywikibot.Page(site, "User:Hamish-bot")
-    user_page_text = user_page.text
-    user_page_text = re.sub(r'<!-- T2rs -->(.*)<!-- T2re -->', '<!-- T2rs -->' + t + '<!-- T2re -->', user_page_text, flags=re.M)
-    if op:
-        user_page_text = re.sub(r'<!-- T2os -->(.*)<!-- T2oe -->', '<!-- T2os -->' + t + '<!-- T2oe -->', user_page_text, flags=re.M)
-    pywikibot.showDiff(user_page.text, user_page_text)
-    user_page.text = user_page_text
-    user_page.save(summary = "Updating task report", minor = False)
-
-
+os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
 rec_time = (datetime.datetime.now() + datetime.timedelta(hours = 8)).__format__('%d/%m/%y %H:%M')
@@ -92,7 +81,7 @@ for section in text:
     print()
 
 if count == 0:
-    timeRecord(op, rec_time)
+    time_record(1, rec_time, op)
     print("nothing changed")
 else:
     pywikibot.showDiff(ewippage.text, mainPageText)
@@ -115,4 +104,4 @@ else:
         summary = cfg["archive_page_summary"].format(len(archivelist[target]))
         print(summary)
         archivepage.save(summary=summary_prefix + summary, minor=False)
-    timeRecord(op, rec_time)
+    time_record(1, rec_time, op)

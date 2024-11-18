@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import json, os, re, time, requests, datetime
-
-os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
+import sys
 import pywikibot
 from config import config_page_name  # pylint: disable=E0611,W0614
-
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from botutils.record import time_record
+os.environ['PYWIKIBOT_DIR'] = os.path.dirname(os.path.realpath(__file__))
 os.environ['TZ'] = 'UTC'
 print('Starting at: ' + time.asctime(time.localtime(time.time())))
 rec_time = (datetime.datetime.now() + datetime.timedelta(hours = 8)).__format__('%d/%m/%y %H:%M')
@@ -54,13 +55,5 @@ for page in catpage.articles():
     op = True
     print()
 
-# Updating task table on user page
+time_record(3, rec_time, op)
 
-user_page = pywikibot.Page(site, "User:Hamish-bot")
-user_page_text = user_page.text
-user_page_text = re.sub(r'<!-- T4rs -->(.*)<!-- T4re -->', '<!-- T4rs -->' + rec_time + '<!-- T4re -->', user_page_text, flags=re.M)
-if op:
-    user_page_text = re.sub(r'<!-- T4os -->(.*)<!-- T4oe -->', '<!-- T4os -->' + rec_time + '<!-- T4oe -->', user_page_text, flags=re.M)
-pywikibot.showDiff(user_page.text, user_page_text)
-user_page.text = user_page_text
-user_page.save(summary = "Updating task report", minor = False)

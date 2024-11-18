@@ -10,8 +10,14 @@ import subprocess
 import os
 import time
 import datetime
-from config import config_page_name
+from config import config_page_name # pylint: disable=E0611,W0614
 import json
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from botutils.record import time_record
+
+os.environ['TZ'] = 'UTC'
+print('Starting at: ' + time.asctime(time.localtime(time.time())))
 
 site = pywikibot.Site('zh', 'wikipedia')
 config_page = pywikibot.Page(site, config_page_name)
@@ -21,18 +27,6 @@ print(json.dumps(cfg, indent=4, ensure_ascii=False))
 
 if not cfg["enable"]:
     exit("disabled\n")
-
-def time_record(t):
-    user_page = pywikibot.Page(site, "User:Hamish-bot")
-    user_page_text = user_page.text
-    user_page_text = re.sub(r'<!-- T8rs -->(.*)<!-- T8re -->', '<!-- T8rs -->' + t + '<!-- T8re -->', user_page_text, flags=re.M)
-    user_page_text = re.sub(r'<!-- T8os -->(.*)<!-- T8oe -->', '<!-- T8os -->' + t + '<!-- T8oe -->', user_page_text, flags=re.M)
-    pywikibot.showDiff(user_page.text, user_page_text)
-    user_page.text = user_page_text
-    user_page.save(summary = "Updating task report", minor = False)
-
-os.environ['TZ'] = 'UTC'
-print('Starting at: ' + time.asctime(time.localtime(time.time())))
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 '''
@@ -80,4 +74,5 @@ else:
     pywikibot.showDiff(report_page.text, new_text)
     report_page.text = new_text
     report_page.save('[[Wikipedia:机器人/申请/Hamish-bot/8|T8]]：生成本地存在檔案描述的維基共享資源文件列表')
-    time_record(str((datetime.datetime.now() + datetime.timedelta(hours=8)).__format__('%d/%m/%y %H:%M')))
+    rec_time = (datetime.datetime.now() + datetime.timedelta(hours=8)).__format__('%d/%m/%y %H:%M')
+    time_record(4, rec_time, True)
