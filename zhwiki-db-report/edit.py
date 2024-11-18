@@ -10,7 +10,17 @@ import subprocess
 import os
 import time
 import datetime
+from config import config_page_name
+import json
 
+site = pywikibot.Site('zh', 'wikipedia')
+config_page = pywikibot.Page(site, config_page_name)
+cfg = config_page.text
+cfg = json.loads(cfg)
+print(json.dumps(cfg, indent=4, ensure_ascii=False))
+
+if not cfg["enable"]:
+    exit("disabled\n")
 
 def time_record(t):
     user_page = pywikibot.Page(site, "User:Hamish-bot")
@@ -43,7 +53,6 @@ while True:
 page_text = '* 生成時間：~~~~~\n'
 
 bad_pattern = re.compile(r'\{\{(受限[制製]文件|[Bb]ad\s?image|[Rr]estricted use)\}\}')
-site = pywikibot.Site('zh', 'wikipedia')
 site.login()
 
 file_path = os.path.join(dir_path, 'reports/report1.txt')
