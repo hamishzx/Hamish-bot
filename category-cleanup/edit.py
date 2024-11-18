@@ -37,7 +37,7 @@ def fetch_pages():
         results = cursor.fetchall()
         # Display results
         for row in results:
-            print(f"Page ID: {row[0]}, Title: {row[1]}")
+            print(f"Page ID: {row[0]}, Title: {row[1].decode('utf-8')}")
         conn.close()
         return results
     except Exception as e:
@@ -45,7 +45,6 @@ def fetch_pages():
 
 if __name__ == '__main__':
     pages_to_remove = [page[1] for page in fetch_pages()]
-    print(pages_to_remove)
     if not pages_to_remove:
         print('No pages to remove')
         time_record(str((datetime.datetime.now() + datetime.timedelta(hours=8)).__format__('%d/%m/%y %H:%M')), False)
