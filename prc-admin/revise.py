@@ -48,7 +48,7 @@ def process_village_templates():
                     if not current_text.startswith(deprecated_template):
                         new_text = deprecated_template + "\n" + current_text
                         page.text = new_text
-                        page.save(summary="[[Wikipedia:机器人/申请/Hamish-bot/12|T12]]：PRC admin村級模板添加已棄用模板標記，基於[[Special:Permalink/|共識]]", minor=False)
+                        page.save(summary="[[Wikipedia:机器人/申请/Hamish-bot/12|T12]]：PRC admin村級模板添加已棄用模板標記，基於[[Special:Permalink/88341043#村级模板data页和乡级模板list页清理|共識]]", minor=False)
                         logging.info(f"[{i}/{total_count}] Updated {page_title}")
                     else:
                         logging.info(f"[{i}/{total_count}] Skipped {page_title} (already has deprecated template)")
@@ -82,7 +82,7 @@ def process_town_templates():
             try:
                 if page.exists():
                     page.text = replacement_content
-                    page.save(summary="[[Wikipedia:机器人/申请/Hamish-bot/12|T12]]：PRC admin鄉級模板更換顯示下級區劃模板，基於[[Special:Permalink/|共識]]", minor=False)
+                    page.save(summary="[[Wikipedia:机器人/申请/Hamish-bot/12|T12]]：PRC admin鄉級模板更換顯示下級區劃模板，基於[[Special:Permalink/88341043#村级模板data页和乡级模板list页清理|共識]]", minor=False)
                     logging.info(f"[{i}/{total_count}] Replaced content for {page_title}")
             except Exception as e:
                 logging.error(f"[{i}/{total_count}] Error processing {page_title}: {str(e)}")
