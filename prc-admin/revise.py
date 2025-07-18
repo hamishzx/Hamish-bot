@@ -76,7 +76,7 @@ def process_town_templates():
         logging.info(f"Found {total_count} towns to process")
         
         for i, (full_code,) in enumerate(results, 1):
-            page_title = f"Template:PRC admin/data/{full_code[:2]}/{full_code[2:4]}/{full_code[4:6]}/{full_code[6:9]}/000"
+            page_title = f"Template:PRC admin/list/{full_code[:2]}/{full_code[2:4]}/{full_code[4:6]}/{full_code[6:9]}/000"
             page = pywikibot.Page(site, page_title)
             
             try:
